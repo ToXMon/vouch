@@ -9,9 +9,10 @@ import {Vouch} from "../src/Vouch.sol";
  * @notice Deployment script for Vouch contract on Monad testnet.
  * @dev Usage:
  *      forge script script/DeployVouch.s.sol:DeployVouch \
- *          --rpc-url monad_testnet \
+ *          --rpc-url $MONAD_RPC_URL \
  *          --broadcast \
- *          --private-key $PRIVATE_KEY
+ *          --verify \
+ *          --private-key $DEPLOYER_PRIVATE_KEY
  *
  *      Set ADJUDICATOR env var to specify the AI agent wallet address.
  *      If unset, defaults to the deployer (msg.sender) — replace with multisig for production.
@@ -25,8 +26,10 @@ contract DeployVouch is Script {
             revert("ADJUDICATOR cannot be zero address");
         }
 
-        uint256 privateKey = vm.envUint("PRIVATE_KEY");
-        vm.startBroadcast(privateKey);
+        // Private key is provided via the --private-key flag to `forge script`,
+        // not read from env here, so the script works uniformly in local tests
+        // (no env required) and live deploys (key passed by the deploy shell).
+        vm.startBroadcast();
 
         vouch = new Vouch(adjudicator);
 

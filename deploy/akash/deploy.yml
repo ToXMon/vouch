@@ -1,0 +1,69 @@
+---
+# Vouch Agent Runtime — Akash SDL (Stack Definition Language)
+#
+# This file is a TEMPLATE. deploy-akash.sh injects the real image reference
+# and secrets from your environment (sed replacement) before the manifest
+# is sent to the provider. No real values belong here.
+#
+# Service: vouch-runtime
+#   FastAPI app (agents/runtime/main.py) served by uvicorn on port 8000.
+#   Health endpoint: GET /api/health
+#
+# Akash best-practice note:
+#   The placeholder tag below is `__IMAGE_TAG__`. For production, deploy an
+#   IMMUTABLE tag (e.g. `sha-a1b2c3d` from GHCR, or a semantic version).
+#   `:latest` is acceptable for local/dev only because Akash providers cache
+#   by digest; an immutable tag guarantees the exact image you tested.
+#
+# Readiness probe:
+#   Akash SDL v2.0 has no native readiness/liveness probe field. The
+#   /api/health endpoint is therefore verified AFTER deployment by
+#   deploy-akash.sh (curl probe) and should be monitored externally.
+#   Do not add a fabricated probe field — it will fail SDL validation.
+
+version: "2.0"
+
+services:
+  vouch-runtime:
+    # Placeholder — replaced at deploy time with the real GHCR reference.
+    image: ghcr.io/__GHCR_USER__/vouch-runtime:__IMAGE_TAG__
+    env:
+      # Secrets injected at deploy time by deploy-akash.sh.
+      # NEVER commit real key values here.
+      - "VENICE_API_KEY=__VENICE_API_KEY__"
+      - "THREE_WS_API_KEY=__THREE_WS_API_KEY__"
+      - "AGENT_PORT=8000"
+      - "AGENT_HOST=0.0.0.0"
+    expose:
+      - port: 8000
+        as: 80
+        to:
+          - global: true
+
+profiles:
+  compute:
+    vouch-runtime:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          size: 5Gi
+
+  placement:
+    akash:
+      # No signedBy/attribute filters — accept bids from any provider.
+      # Add attribute constraints here only if you need region/hardware pinning.
+      pricing:
+        vouch-runtime:
+          # uact = ACT tokens, required by the BME model since Mainnet-17.
+          # Do NOT use uakt for deployment pricing.
+          denom: uact
+          amount: 1000
+
+deployment:
+  vouch-runtime:
+    akash:
+      profile: vouch-runtime
+      count: 1

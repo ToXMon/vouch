@@ -28,6 +28,8 @@ venv/
 *.egg-info/
 *.deploy.yaml
 deploy/akash/*.tx
+deploy/monad/.deployed-address
+deploy/monad/.deploy.log
 .DS_Store
 Thumbs.db
 .vscode/
