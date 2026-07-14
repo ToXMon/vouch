@@ -38,3 +38,6 @@ Thumbs.db
 *.swo
 *.log
 logs/
+
+# ASE evidence ledger (tool artifact, not source)
+.ase/
