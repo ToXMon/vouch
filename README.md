@@ -13,6 +13,19 @@
 
 ---
 
+## 🌐 Live Deployment
+
+| Service | URL | Status |
+|---------|-----|--------|
+| **Frontend** | https://71ofkdl1pdeff7plsbgjq50i0o.ingress.oregon.skyfall.cz | ✅ Live |
+| **Agent Runtime** | https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz | ✅ Live |
+| **API Docs (Swagger)** | https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz/docs | ✅ Live |
+| **Health Check** | https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz/api/health | ✅ Live |
+| **Contract** | `0x011189f535F744EC9A7a499F20df99f6CAdF1D25` on Monad Testnet (10143) | ✅ Deployed |
+
+> ⚠️ Akash providers use self-signed TLS certs. Your browser will show a security warning — click "Advanced" → "Proceed" to access the app.
+
+
 ## 🎬 Live Demo
 
 The AI-vs-AI demo runs end-to-end with **real Venice + three.ws API calls**:
