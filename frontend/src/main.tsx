@@ -27,8 +27,8 @@ const queryClient = new QueryClient({
   },
 })
 
-// Wagmi config — includes Para's EVM connector when Para key is present
-const wagmiConfig = createConfig({
+// Wagmi fallback config — only used when Para key is absent
+const fallbackWagmiConfig = createConfig({
   chains: [monadTestnet],
   transports: {
     [monadTestnet.id]: http(MONAD_TESTNET_RPC),
@@ -36,8 +36,12 @@ const wagmiConfig = createConfig({
   multiInjectedProviderDiscovery: true,
 })
 
-// Synchronous render — ParaProvider wraps everything when key is present
-function RootProviders({ children }: { children: React.ReactNode }) {
+/**
+ * When Para key is present: ParaProvider provides wagmi context internally.
+ * Do NOT wrap in a separate WagmiProvider — it shadows Para's connectors.
+ * When Para key is absent: WagmiProvider with injected wallets (MetaMask).
+ */
+function WalletProviders({ children }: { children: React.ReactNode }) {
   if (PARA_API_KEY) {
     return (
       <ParaProvider
@@ -65,20 +69,22 @@ function RootProviders({ children }: { children: React.ReactNode }) {
       </ParaProvider>
     )
   }
-  // No Para key — wagmi only (MetaMask/injected)
-  return <>{children}</>
+  // Fallback: wagmi only (MetaMask/injected)
+  return (
+    <WagmiProvider config={fallbackWagmiConfig}>
+      {children}
+    </WagmiProvider>
+  )
 }
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <WagmiProvider config={wagmiConfig}>
-        <BrowserRouter>
-          <RootProviders>
-            <App />
-          </RootProviders>
-        </BrowserRouter>
-      </WagmiProvider>
+      <BrowserRouter>
+        <WalletProviders>
+          <App />
+        </WalletProviders>
+      </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,
 )
