@@ -7,7 +7,7 @@ import { monadTestnet } from 'wagmi/chains'
 import { ParaProvider, Environment } from '@getpara/react-sdk'
 
 import App from './App.tsx'
-import '@getpara/react-sdk/styles'
+import '@getpara/react-sdk/styles.css'
 import './index.css'
 
 const queryClient = new QueryClient({
