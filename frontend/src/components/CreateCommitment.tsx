@@ -95,10 +95,10 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
 
   if (!isConnected) {
     return (
-      <div className="container">
+      <div className="maxw-2xl">
         <div className="card text-center">
-          <h1 className="text-xl font-semibold">Connect your wallet to create a commitment</h1>
-          <p className="mt-2 text-sm text-zinc-400">
+          <h1 className="mb-1">Connect your wallet to create a commitment</h1>
+          <p className="text-muted">
             Vouch uses Para embedded wallets on Monad testnet. Connect to stake on your claim.
           </p>
         </div>
@@ -107,16 +107,18 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Create a commitment</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          Stake MON on a personal claim. The AI agent drafts a verifiable spec, then your stake locks onchain.
-        </p>
+    <div className="maxw-2xl">
+      <div className="page-head">
+        <div className="page-head-left">
+          <h1 className="page-title">Create a commitment</h1>
+          <p className="page-sub">
+            Stake MON on a personal claim. The AI agent drafts a verifiable spec, then your stake locks onchain.
+          </p>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="card space-y-5">
-        <div>
+      <form onSubmit={handleSubmit} className="card stack">
+        <div className="field">
           <label htmlFor="claim" className="label">Your claim</label>
           <textarea
             id="claim"
@@ -128,10 +130,10 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
             required
             minLength={8}
           />
-          <p className="mt-1.5 text-xs text-zinc-500">{claim.length} chars · min 8</p>
+          <p className="field-hint">{claim.length} chars · min 8</p>
         </div>
 
-        <div>
+        <div className="field">
           <label htmlFor="counterparty" className="label">Counterparty address</label>
           <input
             id="counterparty"
@@ -143,40 +145,36 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
             autoComplete="off"
           />
           {counterparty && !isAddress(counterparty) && (
-            <p className="mt-1.5 text-xs text-rose-400">Enter a valid 0x address</p>
+            <p className="field-error">Enter a valid 0x address</p>
           )}
           {counterparty && address && counterparty.toLowerCase() === address.toLowerCase() && (
-            <p className="mt-1.5 text-xs text-rose-400">Counterparty cannot be your own address</p>
+            <p className="field-error">Counterparty cannot be your own address</p>
           )}
         </div>
 
-        <div>
+        <div className="field">
           <label className="label">Verification type</label>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <div className="choice-grid">
             {VTYPE_OPTIONS.map((opt) => (
               <button
                 key={opt.key}
                 type="button"
                 onClick={() => setVType(opt.value)}
                 aria-pressed={vType === opt.value}
-                className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
-                  vType === opt.value
-                    ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
-                    : 'border-white/5 bg-white/5 text-zinc-400 hover:bg-white/10'
-                }`}
+                className="choice"
                 title={opt.hint}
               >
                 {opt.label}
               </button>
             ))}
           </div>
-          <p className="mt-1.5 text-xs text-zinc-500">
+          <p className="field-hint">
             {VTYPE_OPTIONS.find((o) => o.value === vType)?.hint}
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
+        <div className="row" style={{ gap: '1rem' }}>
+          <div className="field grow">
             <label htmlFor="deadline" className="label">Deadline</label>
             <select
               id="deadline"
@@ -189,7 +187,7 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
               ))}
             </select>
           </div>
-          <div>
+          <div className="field grow">
             <label htmlFor="stake" className="label">Stake (MON)</label>
             <input
               id="stake"
@@ -201,7 +199,7 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
               onChange={(e) => setStakeMon(e.target.value)}
               required
             />
-            <p className="mt-1.5 text-xs text-zinc-500">Balance: {Number(balanceMon).toFixed(3)} MON</p>
+            <p className="field-hint">Balance: {Number(balanceMon).toFixed(3)} MON</p>
           </div>
         </div>
 
@@ -212,30 +210,30 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
         )}
 
         {txHash && (
-          <div role="status" className="alert alert-success space-y-1">
-            <div className="font-semibold">
+          <div role="status" className="alert alert-success">
+            <div style={{ fontWeight: 600 }}>
               {confirmed ? '✓ Commitment created' : confirming ? 'Confirming onchain…' : 'Transaction submitted'}
             </div>
-            <div className="mono break-all text-[11px] opacity-80">tx: {txHash}</div>
+            <div className="mono break-all" style={{ fontSize: '0.72rem', opacity: 0.8, marginTop: '0.3rem' }}>tx: {txHash}</div>
             {confirmed && (
-              <Link to="/" className="inline-block text-xs font-medium underline underline-offset-2">
+              <Link to="/" className="mt-1" style={{ display: 'inline-block', fontSize: '0.8rem', fontWeight: 500, color: 'var(--success)' }}>
                 View on the public feed →
               </Link>
             )}
           </div>
         )}
 
-        <button type="submit" className="btn btn-primary w-full" disabled={!valid || confirming}>
+        <button type="submit" className="btn btn-primary btn-block" disabled={!valid || confirming}>
           {submitting ? (
-            <><span className="spin inline-block h-3.5 w-3.5 rounded-full border-2 border-emerald-900 border-t-transparent" aria-hidden="true" /> Drafting spec + signing…</>
+            <><span className="spin" aria-hidden="true" style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid var(--primary-fg)', borderTopColor: 'transparent' }} /> Drafting spec + signing…</>
           ) : confirming ? (
-            <><span className="spin inline-block h-3.5 w-3.5 rounded-full border-2 border-emerald-900 border-t-transparent" aria-hidden="true" /> Confirming…</>
+            <><span className="spin" aria-hidden="true" style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid var(--primary-fg)', borderTopColor: 'transparent' }} /> Confirming…</>
           ) : (
             <>Lock {stakeMon || '0'} MON & create commitment</>
           )}
         </button>
 
-        <p className="text-center text-[11px] text-zinc-500">
+        <p className="text-center text-dim" style={{ fontSize: '0.72rem' }}>
           The AI agent will draft a verifiable spec from your claim before the onchain tx.
         </p>
       </form>

@@ -49,12 +49,12 @@ export default function WalletConnect() {
       >
         {isPending ? (
           <>
-            <span className="spin inline-block h-3 w-3 rounded-full border-2 border-emerald-900 border-t-transparent" aria-hidden="true" />
+            <span className="spin" aria-hidden="true" style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid var(--primary-fg)', borderTopColor: 'transparent' }} />
             Connecting…
           </>
         ) : (
           <>
-            <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <svg className="" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M11 5V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               <rect x="6" y="6" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.5" />
             </svg>
@@ -69,23 +69,23 @@ export default function WalletConnect() {
   const symbol = balance?.symbol ?? 'MON'
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="row">
       <div
-        className="hidden items-center gap-2 rounded-md border border-white/5 bg-white/5 px-2.5 py-1.5 sm:flex"
+        className="wallet-pill wallet-balance-pill"
         title={`${bal} ${symbol}`}
       >
-        <span className="text-xs font-medium text-zinc-300">{bal}</span>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{symbol}</span>
+        <span className="wallet-balance">{bal}</span>
+        <span className="wallet-balance-symbol">{symbol}</span>
       </div>
       <button
         type="button"
         onClick={copyAddress}
-        className="group flex items-center gap-2 rounded-md border border-white/5 bg-white/5 px-2.5 py-1.5 transition-colors hover:bg-white/10"
+        className="wallet-pill"
         title="Copy address"
         aria-label={`Connected address ${address}. Click to copy.`}
       >
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-        <span className="mono text-xs font-medium text-zinc-200">{copied ? 'Copied!' : shortAddr(address)}</span>
+        <span className="wallet-dot" aria-hidden="true" />
+        <span className="wallet-addr">{copied ? 'Copied!' : shortAddr(address)}</span>
       </button>
       <button
         type="button"
@@ -94,7 +94,7 @@ export default function WalletConnect() {
         aria-label="Disconnect wallet"
         title="Disconnect"
       >
-        <svg className="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path d="M11 9V5a3 3 0 0 0-6 0v4M4 9h8v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>

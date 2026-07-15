@@ -79,30 +79,32 @@ export default function EvidenceSubmit({ isConnected }: Props) {
 
   if (!isConnected) {
     return (
-      <div className="container">
+      <div className="maxw-2xl">
         <div className="card text-center">
-          <h1 className="text-xl font-semibold">Connect your wallet to submit evidence</h1>
-          <p className="mt-2 text-sm text-zinc-400">Only the commitment creator can submit evidence before the deadline.</p>
+          <h1 className="mb-1">Connect your wallet to submit evidence</h1>
+          <p className="text-muted">Only the commitment creator can submit evidence before the deadline.</p>
         </div>
       </div>
     )
   }
 
   const verdictTone =
-    verdict?.verdict === 'verified' ? 'alert-success' :
-    verdict?.verdict === 'rejected' ? 'alert-error' : 'alert-info'
+    verdict?.verdict === 'pass' || verdict?.verdict === 'supported' ? 'alert-success' :
+    verdict?.verdict === 'fail' || verdict?.verdict === 'contradicted' ? 'alert-error' : 'alert-warning'
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Submit evidence</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          Paste a photo URL, screenshot, or text proof. The AI auditor checks it against the claim, then you can anchor the hash onchain.
-        </p>
+    <div className="maxw-2xl">
+      <div className="page-head">
+        <div className="page-head-left">
+          <h1 className="page-title">Submit evidence</h1>
+          <p className="page-sub">
+            Paste a photo URL, screenshot, or text proof. The AI auditor checks it against the claim, then you can anchor the hash onchain.
+          </p>
+        </div>
       </div>
 
-      <form onSubmit={handleAudit} className="card space-y-5">
-        <div>
+      <form onSubmit={handleAudit} className="card stack">
+        <div className="field">
           <label htmlFor="cid" className="label">Commitment ID</label>
           <input
             id="cid"
@@ -114,7 +116,7 @@ export default function EvidenceSubmit({ isConnected }: Props) {
           />
         </div>
 
-        <div>
+        <div className="field">
           <label htmlFor="claim" className="label">Original claim</label>
           <textarea
             id="claim"
@@ -128,20 +130,16 @@ export default function EvidenceSubmit({ isConnected }: Props) {
           />
         </div>
 
-        <div>
+        <div className="field">
           <label className="label">Verification type</label>
-          <div className="flex flex-wrap gap-2">
+          <div className="choice-row">
             {VTYPE_API.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setVtype(opt.value)}
                 aria-pressed={vtype === opt.value}
-                className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                  vtype === opt.value
-                    ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
-                    : 'border-white/5 bg-white/5 text-zinc-400 hover:bg-white/10'
-                }`}
+                className="choice"
               >
                 {opt.label}
               </button>
@@ -149,7 +147,7 @@ export default function EvidenceSubmit({ isConnected }: Props) {
           </div>
         </div>
 
-        <div>
+        <div className="field">
           <label htmlFor="evidence" className="label">Evidence (URL or text)</label>
           <textarea
             id="evidence"
@@ -164,9 +162,9 @@ export default function EvidenceSubmit({ isConnected }: Props) {
 
         {error && <div role="alert" className="alert alert-error">{error}</div>}
 
-        <button type="submit" className="btn btn-primary w-full" disabled={!canAudit}>
+        <button type="submit" className="btn btn-primary btn-block" disabled={!canAudit}>
           {auditing ? (
-            <><span className="spin inline-block h-3.5 w-3.5 rounded-full border-2 border-emerald-900 border-t-transparent" aria-hidden="true" /> AI auditing evidence…</>
+            <><span className="spin" aria-hidden="true" style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid var(--primary-fg)', borderTopColor: 'transparent' }} /> AI auditing evidence…</>
           ) : (
             <>Run AI audit</>
           )}
@@ -174,55 +172,54 @@ export default function EvidenceSubmit({ isConnected }: Props) {
       </form>
 
       {verdict && (
-        <div className={`mt-4 card space-y-3 ${verdictTone}`}>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-xs uppercase tracking-wider opacity-80">AI Verdict</div>
-              <div className="text-lg font-bold capitalize">{verdict.verdict}</div>
+        <div className={`card stack ${verdictTone}`} style={{ marginTop: '1rem' }}>
+          <div className="verdict">
+            <div className="verdict-block">
+              <span className="eyebrow">AI Verdict</span>
+              <div className={`verdict-value ${verdict.verdict}`}>{verdict.verdict}</div>
             </div>
-            <div className="text-right">
-              <div className="text-xs uppercase tracking-wider opacity-80">Confidence</div>
-              <div className="text-lg font-bold mono">{(verdict.confidence * 100).toFixed(0)}%</div>
+            <div className="verdict-block" style={{ textAlign: 'right' }}>
+              <span className="eyebrow">Confidence</span>
+              <div className="verdict-value mono">{(verdict.confidence * 100).toFixed(0)}%</div>
             </div>
           </div>
           {verdict.reasoning && (
-            <p className="text-sm leading-relaxed opacity-90">{verdict.reasoning}</p>
+            <p style={{ fontSize: '0.86rem', lineHeight: 1.6, opacity: 0.92 }}>{verdict.reasoning}</p>
           )}
 
           {evidenceHash && (
-            <div className="divider opacity-50" />
-          )}
+            <>
+              <div className="divider" style={{ margin: '0.5rem 0', opacity: 0.4 }} />
+              <div className="stack-tight">
+                <div>
+                  <div className="eyebrow" style={{ marginBottom: '0.3rem' }}>Evidence hash (keccak256)</div>
+                  <div className="mono break-all" style={{ fontSize: '0.72rem', opacity: 0.9 }}>{evidenceHash}</div>
+                </div>
 
-          {evidenceHash && (
-            <div className="space-y-2">
-              <div>
-                <div className="text-xs uppercase tracking-wider opacity-80">Evidence hash (keccak256)</div>
-                <div className="mono break-all text-[11px] opacity-90">{evidenceHash}</div>
-              </div>
+                <button
+                  type="button"
+                  onClick={handleSubmitOnchain}
+                  disabled={!idParsed || confirming}
+                  className="btn btn-secondary btn-block"
+                >
+                  {confirming ? (
+                    <><span className="spin" aria-hidden="true" style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid var(--text-muted)', borderTopColor: 'transparent' }} /> Confirming…</>
+                  ) : confirmed && txHash ? (
+                    <>✓ Submitted onchain</>
+                  ) : (
+                    <>Anchor onchain (submitEvidence)</>
+                  )}
+                </button>
 
-              <button
-                type="button"
-                onClick={handleSubmitOnchain}
-                disabled={!idParsed || confirming}
-                className="btn btn-secondary w-full"
-              >
-                {confirming ? (
-                  <><span className="spin inline-block h-3.5 w-3.5 rounded-full border-2 border-zinc-500 border-t-transparent" aria-hidden="true" /> Confirming…</>
-                ) : confirmed && txHash ? (
-                  <>✓ Submitted onchain</>
-                ) : (
-                  <>Anchor onchain (submitEvidence)</>
+                {txHash && (
+                  <div className="mono break-all" style={{ fontSize: '0.72rem', opacity: 0.7 }}>tx: {txHash}</div>
                 )}
-              </button>
 
-              {txHash && (
-                <div className="mono break-all text-[11px] opacity-70">tx: {txHash}</div>
-              )}
-
-              {!idParsed && commitmentId && (
-                <p className="text-xs text-rose-400">Enter a valid numeric commitment ID to submit onchain.</p>
-              )}
-            </div>
+                {!idParsed && commitmentId && (
+                  <p className="text-danger" style={{ fontSize: '0.78rem' }}>Enter a valid numeric commitment ID to submit onchain.</p>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}

@@ -31,9 +31,9 @@ function StatusBadge({ status }: { status: number }) {
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-2">
-      <dt className="text-xs uppercase tracking-wider text-zinc-500">{label}</dt>
-      <dd className="text-right text-sm text-zinc-200">{children}</dd>
+    <div className="detail-row">
+      <dt className="detail-label">{label}</dt>
+      <dd className="detail-value">{children}</dd>
     </div>
   )
 }
@@ -66,24 +66,24 @@ export default function CommitmentDetail({ address, isConnected }: Props) {
   if (!idBigInt) {
     return (
       <div className="card alert alert-error">
-        Invalid commitment ID. <Link to="/" className="underline">Back to feed</Link>
+        Invalid commitment ID. <Link to="/" className="text-primary">Back to feed</Link>
       </div>
     )
   }
 
   if (isLoading) {
     return (
-      <div className="card space-y-3" aria-busy="true">
-        <div className="h-5 w-24 skeleton" />
-        <div className="h-3 w-full skeleton" />
-        <div className="h-3 w-2/3 skeleton" />
+      <div className="card stack" aria-busy="true">
+        <div className="skeleton" style={{ width: 96, height: 20 }} />
+        <div className="skeleton" style={{ width: '100%', height: 14 }} />
+        <div className="skeleton" style={{ width: '66%', height: 14 }} />
       </div>
     )
   }
 
   if (isError || !commitment) {
     return (
-      <div className="card space-y-3">
+      <div className="card stack">
         <div className="alert alert-error">
           Couldn't load commitment #{id}: {error instanceof Error ? error.message.slice(0, 120) : 'not found'}
         </div>
@@ -121,55 +121,55 @@ export default function CommitmentDetail({ address, isConnected }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <Link to="/" className="inline-flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300">
-        <svg className="h-3 w-3" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M10 6H2m3 3-3-3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    <div className="maxw-2xl stack">
+      <Link to="/" className="detail-back">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M10 6H2m3 3-3-3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
         Back to feed
       </Link>
 
-      <div className="card space-y-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className="card stack">
+        <div className="row-between">
           <div>
-            <div className="mono text-xs text-zinc-500">Commitment #{id}</div>
-            <h1 className="mt-1 text-xl font-bold tracking-tight">
-              {formatMon(commitment.stake)} <span className="text-base font-normal text-zinc-400">MON staked</span>
+            <div className="eyebrow mono">Commitment #{id}</div>
+            <h1 className="page-title mt-1">
+              {formatMon(commitment.stake)} <span className="text-muted" style={{ fontSize: '1rem', fontWeight: 400 }}>MON staked</span>
             </h1>
           </div>
           <StatusBadge status={commitment.status} />
         </div>
 
-        <dl className="divide-y divide-white/5">
+        <dl className="detail-list">
           <Row label="Creator">
             <span className="mono">{shortAddr(commitment.creator)}</span>
-            {isCreator && <span className="ml-2 text-[10px] uppercase text-emerald-400">you</span>}
+            {isCreator && <span className="badge badge-accent" style={{ marginLeft: '0.5rem' }}>you</span>}
           </Row>
           <Row label="Counterparty">
             {isSelfCommitment ? (
-              <span className="text-zinc-500">self-commitment</span>
+              <span className="text-muted">self-commitment</span>
             ) : (
               <>
                 <span className="mono">{shortAddr(commitment.counterparty)}</span>
-                {isCounterparty && <span className="ml-2 text-[10px] uppercase text-emerald-400">you</span>}
+                {isCounterparty && <span className="badge badge-accent" style={{ marginLeft: '0.5rem' }}>you</span>}
               </>
             )}
           </Row>
           <Row label="Verification">
-            <span className="badge badge-active">{vTypeLabel(commitment.vType)}</span>
+            <span className="badge badge-neutral">{vTypeLabel(commitment.vType)}</span>
           </Row>
           <Row label="Deadline">
             {deadlineSecs > 0 ? (
-              <span className="text-emerald-300">in {Math.floor(deadlineSecs / 3600)}h {Math.floor((deadlineSecs % 3600) / 60)}m</span>
+              <span className="text-primary">in {Math.floor(deadlineSecs / 3600)}h {Math.floor((deadlineSecs % 3600) / 60)}m</span>
             ) : (
-              <span className="text-rose-400">passed</span>
+              <span className="text-danger">passed</span>
             )}
-            <div className="text-[11px] text-zinc-500">{new Date(Number(commitment.deadline) * 1000).toLocaleString()}</div>
+            <div className="text-dim" style={{ fontSize: '0.72rem' }}>{new Date(Number(commitment.deadline) * 1000).toLocaleString()}</div>
           </Row>
           <Row label="Spec hash">
-            <span className="mono break-all text-[11px]">{commitment.specHash}</span>
+            <span className="mono break-all" style={{ fontSize: '0.72rem' }}>{commitment.specHash}</span>
           </Row>
           {commitment.evidenceHash && commitment.evidenceHash !== '0x0000000000000000000000000000000000000000000000000000000000000000' && (
             <Row label="Evidence hash">
-              <span className="mono break-all text-[11px]">{commitment.evidenceHash}</span>
+              <span className="mono break-all" style={{ fontSize: '0.72rem' }}>{commitment.evidenceHash}</span>
             </Row>
           )}
         </dl>
@@ -183,14 +183,14 @@ export default function CommitmentDetail({ address, isConnected }: Props) {
       )}
 
       {windowOpen && !isChallenged && !isSelfCommitment && (
-        <div className="alert alert-info">
-          ⏳ Challenge window open — counterparty may dispute within 24h of the deadline.
+        <div className="alert alert-warning">
+          Challenge window open — counterparty may dispute within 24h of the deadline.
         </div>
       )}
 
       {isChallenged && (
-        <div className="alert alert-info">
-          ⚠️ Challenged — awaiting AI adjudicator ruling.
+        <div className="alert alert-warning">
+          Challenged — awaiting AI adjudicator ruling.
         </div>
       )}
 
@@ -198,18 +198,18 @@ export default function CommitmentDetail({ address, isConnected }: Props) {
       {actionTx && (
         <div role="status" className="alert alert-success">
           {confirmed ? '✓ Confirmed' : confirming ? 'Confirming onchain…' : 'Submitted'}
-          <div className="mono break-all text-[11px] opacity-80">tx: {actionTx}</div>
+          <div className="mono break-all" style={{ fontSize: '0.72rem', opacity: 0.8, marginTop: '0.3rem' }}>tx: {actionTx}</div>
         </div>
       )}
 
       {/* Actions */}
       {isConnected && !isSettled && (
-        <div className="card space-y-3">
-          <h2 className="text-sm font-semibold text-zinc-300">Actions</h2>
+        <div className="card stack">
+          <div className="section-label">Actions</div>
 
           {/* Counterparty: challenge during window */}
           {isCounterparty && isActive && windowOpen && (
-            <div className="space-y-2">
+            <div className="stack-tight">
               <label htmlFor="challenge-arg" className="label">Challenge argument (optional)</label>
               <textarea
                 id="challenge-arg"
@@ -221,14 +221,14 @@ export default function CommitmentDetail({ address, isConnected }: Props) {
               />
               <button
                 type="button"
-                className="btn btn-danger w-full"
+                className="btn btn-danger btn-block"
                 disabled={confirming}
                 onClick={() => handleAction('challenge', [idBigInt], 'Challenge')}
               >
                 {confirming ? 'Confirming…' : 'Challenge this commitment'}
               </button>
               {challengeArg && (
-                <p className="text-[11px] text-zinc-500">
+                <p className="text-dim" style={{ fontSize: '0.72rem' }}>
                   Note: the onchain challenge() takes no argument — your text here is for the AI adjudicator context and not stored onchain in this MVP.
                 </p>
               )}
@@ -239,7 +239,7 @@ export default function CommitmentDetail({ address, isConnected }: Props) {
           {isActive && canAutoSettle && (
             <button
               type="button"
-              className="btn btn-primary w-full"
+              className="btn btn-primary btn-block"
               disabled={confirming}
               onClick={() => handleAction('settle', [idBigInt, true], 'Settle')}
             >
@@ -249,11 +249,11 @@ export default function CommitmentDetail({ address, isConnected }: Props) {
 
           {/* Adjudicator-only: settle disputed */}
           {isChallenged && (
-            <div className="space-y-2">
-              <p className="text-xs text-zinc-500">
-                Disputed commitments can only be settled by the onchain adjudicator wallet. The frontend will pass your ruling to <code className="mono">settle(id, creatorWins)</code>.
+            <div className="stack-tight">
+              <p className="text-muted" style={{ fontSize: '0.8rem' }}>
+                Disputed commitments can only be settled by the onchain adjudicator wallet. The frontend will pass your ruling to <code className="code-inline">settle(id, creatorWins)</code>.
               </p>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="choice-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
                 <button
                   type="button"
                   className="btn btn-primary"
@@ -276,13 +276,13 @@ export default function CommitmentDetail({ address, isConnected }: Props) {
 
           {/* No actions available */}
           {!windowOpen && !canAutoSettle && !isChallenged && (
-            <p className="text-xs text-zinc-500">
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>
               No actions available for this commitment in its current state.
             </p>
           )}
 
           {!isConnected && (
-            <p className="text-xs text-zinc-500">Connect your wallet to take action on this commitment.</p>
+            <p className="text-muted" style={{ fontSize: '0.8rem' }}>Connect your wallet to take action on this commitment.</p>
           )}
         </div>
       )}
