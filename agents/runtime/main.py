@@ -72,7 +72,7 @@ class SpecRequest(BaseModel):
 
 class SpecResponse(BaseModel):
     spec: dict[str, Any]
-    keccak256_hash: str
+    spec_hash: str
 
 
 class EvidenceAuditRequest(BaseModel):
@@ -93,6 +93,8 @@ class EvidenceAuditResponse(BaseModel):
 class DisputeRequest(BaseModel):
     commitment: dict[str, Any] = Field(..., description="The disputed commitment spec")
     dispute_reason: str | None = Field(None, description="Why the commitment is disputed")
+    evidence: dict[str, Any] = Field(default_factory=dict, description="Evidence context for adjudication")
+    auditor_verdict: dict[str, Any] = Field(default_factory=dict, description="Prior auditor verdict for context")
 
 
 class DisputeResponse(BaseModel):
@@ -123,7 +125,7 @@ _cors_origins = os.environ.get("VOUCH_CORS_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in _cors_origins],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -171,7 +173,7 @@ async def create_commitment_spec(req: SpecRequest) -> SpecResponse:
     keccak_hash = Web3.keccak(text=canonical_json).hex()
 
     logger.info("Commitment spec generated; hash=%s", keccak_hash)
-    return SpecResponse(spec=spec_dict, keccak256_hash=keccak_hash)
+    return SpecResponse(spec=spec_dict, spec_hash=keccak_hash)
 
 
 @app.post("/api/evidence/audit", response_model=EvidenceAuditResponse)
@@ -206,12 +208,14 @@ async def audit_evidence(req: EvidenceAuditRequest) -> EvidenceAuditResponse:
         )
 
     try:
-        result = await auditor_mod.audit(req.claim, req.evidence_url)
+        evidence_dict = {"photo_url": req.evidence_url} if req.verification_type == "photo" else {"url": req.evidence_url}
+        result = await auditor_mod.audit(req.claim, evidence_dict, req.verification_type)
+        rd = result.model_dump() if hasattr(result, "model_dump") else result
         return EvidenceAuditResponse(
-            verdict=result.get("verdict", "insufficient"),
-            confidence=result.get("confidence", 0.0),
-            sources=result.get("sources", []),
-            attestation=result.get("attestation", ""),
+            verdict=rd.get("verdict", "insufficient"),
+            confidence=rd.get("confidence", 0.0),
+            sources=rd.get("sources", []),
+            attestation=rd.get("attestation", ""),
         )
     except Exception as exc:
         logger.error("Auditor audit failed: %s", exc)
@@ -229,11 +233,12 @@ async def adjudicate_dispute(req: DisputeRequest) -> DisputeResponse:
     adjudicator_mod = _try_import_sibling("adjudicator")
     if adjudicator_mod is not None and hasattr(adjudicator_mod, "adjudicate"):
         try:
-            result = await adjudicator_mod.adjudicate(req.commitment, req.dispute_reason)
+            result = await adjudicator_mod.adjudicate(req.commitment, req.evidence, req.auditor_verdict, req.dispute_reason or "")
+            rd = result.model_dump() if hasattr(result, "model_dump") else result
             return DisputeResponse(
-                ruling=result.get("ruling", "insufficient"),
-                reasoning=result.get("reasoning", ""),
-                confidence=result.get("confidence", 0.0),
+                ruling=rd.get("ruling", "insufficient"),
+                reasoning=rd.get("reasoning", ""),
+                confidence=rd.get("confidence", 0.0),
                 method="adjudicator",
             )
         except Exception as exc:

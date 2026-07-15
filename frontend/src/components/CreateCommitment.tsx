@@ -67,6 +67,8 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
         counterparty_address: counterparty as `0x${string}`,
       })
 
+      if (!spec_hash) throw new Error('No spec hash returned from agent runtime')
+
       // 2. Create commitment onchain — stake sent as msg.value
       const stakeWei = parseEther(stakeMon)
       const deadlineSeconds = DEADLINE_OPTIONS[deadlineIdx].seconds

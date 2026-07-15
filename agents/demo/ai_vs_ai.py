@@ -53,7 +53,7 @@ PHASE_PAUSE = float(os.environ.get("DEMO_PAUSE", "2.0"))
 
 # Demo contract address placeholder — the real demo would set
 # VOUCH_CONTRACT_ADDRESS in the environment.
-DEFAULT_CONTRACT = "(not configured — set VOUCH_CONTRACT_ADDRESS)"
+DEFAULT_CONTRACT = os.environ.get("VOUCH_CONTRACT_ADDRESS", "0x011189f535F744EC9A7a499F20df99f6CAdF1D25")
 
 
 # ── Dry-run detection ────────────────────────────────────────────────
@@ -175,7 +175,8 @@ async def phase_2_bet(dry_run: bool) -> dict[str, Any]:
 
     # Compute the keccak256-ready deterministic hash.
     det_json = json.dumps(spec_dict, sort_keys=True, separators=(",", ":"))
-    spec_hash = hashlib.sha3_256(det_json.encode()).hexdigest()
+    from web3 import Web3
+    spec_hash = Web3.keccak(text=det_json).hex()[2:]
 
     print()
     print("CommitmentSpec:")
@@ -208,7 +209,7 @@ async def phase_3_stake(spec_dict: dict[str, Any]) -> None:
     tx_spec = {
         "to": contract_addr,
         "function": "createCommitment(bytes32 specHash)",
-        "spec_hash": f"0x{hashlib.sha3_256(json.dumps(spec_dict, sort_keys=True, separators=(',', ':')).encode()).hexdigest()}",
+        "spec_hash": __import__('web3').Web3.keccak(text=json.dumps(spec_dict, sort_keys=True, separators=(',', ':'))).hex(),
         "stake": f'{spec_dict["stake_amount_mon"]} MON',
         "from": spec_dict["parties"]["creator"],
         "gas_estimate": "~50,000 units",

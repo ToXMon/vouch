@@ -261,8 +261,9 @@ def _extract_json(raw: str) -> dict[str, Any]:
     # Strip markdown code fences if present.
     if raw.startswith("```"):
         # Remove opening fence (```json or ```)
-        first_newline = raw.index("\n")
-        raw = raw[first_newline + 1 :]
+        first_newline = raw.find("\n")
+        if first_newline != -1:
+            raw = raw[first_newline + 1 :]
     if raw.endswith("```"):
         raw = raw[: -3]
     raw = raw.strip()
