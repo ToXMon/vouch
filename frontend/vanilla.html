@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vouch — Onchain Commitments</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:oklch(0.15 0.02 170);--surface:oklch(0.20 0.03 170);--surface2:oklch(0.25 0.03 170);--primary:oklch(0.60 0.12 170);--accent:oklch(0.65 0.15 40);--text:oklch(0.95 0.01 170);--muted:oklch(0.70 0.02 170);--border:oklch(0.30 0.02 170)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+h1,h2,h3{font-family:Space Grotesk,sans-serif;font-weight:600}
+.mono{font-family:JetBrains Mono,monospace}
+.header{padding:1rem 2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
+.logo{font-family:Space Grotesk;font-size:1.5rem;font-weight:700;color:var(--primary)}
+.nav{display:flex;gap:1rem;align-items:center}
+.btn{padding:0.5rem 1rem;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:0.5rem;cursor:pointer;font-family:inherit;font-size:0.875rem;transition:all 0.15s}
+.btn:hover{border-color:var(--primary);background:var(--primary)}
+.btn-primary{background:var(--primary);border-color:var(--primary);color:var(--bg);font-weight:500}
+.btn:disabled{opacity:0.5;cursor:default}
+.container{max-width:1200px;margin:0 auto;padding:2rem}
+.grid{display:grid;grid-template-columns:1fr 2fr;gap:2rem}
+@media(max-width:768px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem;margin-bottom:1rem}
+.label{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem}
+input,select,textarea{width:100%;padding:0.625rem;background:var(--bg);border:1px solid var(--border);border-radius:0.5rem;color:var(--text);font-family:inherit;font-size:0.875rem}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)}
+.feed-item{padding:1rem;border-bottom:1px solid var(--border);transition:background 0.1s}
+.feed-item:hover{background:var(--surface2)}
+.badge{display:inline-block;padding:0.2rem 0.6rem;border-radius:999px;font-size:0.7rem;font-weight:500}
+.badge-active{background:oklch(0.60 0.12 170 / 0.2);color:var(--primary)}
+.badge-settled{background:oklch(0.50 0.02 170 / 0.2);color:var(--muted)}
+.badge-expired{background:oklch(0.65 0.15 40 / 0.2);color:var(--accent)}
+.toast{position:fixed;bottom:2rem;right:2rem;padding:1rem 1.5rem;background:var(--surface2);border:1px solid var(--primary);border-radius:0.5rem;z-index:100;max-width:400px}
+.loading{opacity:0.5;pointer-events:none}
+.spinner{display:inline-block;width:1rem;height:1rem;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stat-value{font-family:Space Grotesk;font-size:1.25rem;font-weight:600}
+.stats-row{display:flex;gap:2rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.verdict{padding:0.75rem;border-radius:0.5rem;margin-top:0.5rem}
+.verdict-pass{background:oklch(0.60 0.12 170 / 0.15);border:1px solid var(--primary)}
+.verdict-fail{background:oklch(0.65 0.15 40 / 0.15);border:1px solid var(--accent)}
+.hero{padding:2rem 0;text-align:center}
+.hero h1{font-size:2rem;margin-bottom:0.5rem}
+.hero p{color:var(--muted);max-width:600px;margin:0 auto}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="header">
+<div class="logo">Vouch</div>
+<div class="nav">
+<span id="walletAddr" class="mono" style="font-size:0.8rem;color:var(--muted)">Not connected</span>
+<button id="connectBtn" class="btn btn-primary">Connect Wallet</button>
+</div>
+</div>
+<div class="container">
+<div class="hero">
+<h1>AI-Verified Personal Commitments</h1>
+<p>Stake on your word. Prove it with AI. Settle onchain. Built on Monad with Venice AI agents and three.ws verification.</p>
+</div>
+<div class="stats-row">
+<div><div class="label">Contract</div><div class="mono" style="font-size:0.8rem">0x0111...1D25</div></div>
+<div><div class="label">Chain</div><div class="stat-value" style="font-size:1rem">Monad Testnet</div></div>
+<div><div class="label">Balance</div><div id="balance" class="mono" style="font-size:1rem">--</div></div>
+<div><div class="label">AI Status</div><div id="aiStatus" class="mono" style="font-size:0.8rem">checking...</div></div>
+</div>
+<div class="grid">
+<div>
+<div class="card">
+<h2 style="margin-bottom:1rem;font-size:1.125rem">Create Commitment</h2>
+<div style="display:flex;flex-direction:column;gap:0.75rem">
+<div><div class="label">Your Claim</div><textarea id="claimText" rows="3" placeholder="I will run 5km by Friday"></textarea></div>
+<div><div class="label">Counterparty Address</div><input id="counterparty" type="text" placeholder="0x..." class="mono"></div>
+<div style="display:flex;gap:0.5rem">
+<div style="flex:1"><div class="label">Verification Type</div><select id="vType"><option value="0">Photo</option><option value="1">Web</option><option value="2">Location</option><option value="3">Peer Sign</option><option value="4">API</option></select></div>
+<div style="width:120px"><div class="label">Stake (MON)</div><input id="stake" type="number" value="0.01" step="0.01"></div>
+</div>
+<div><div class="label">Deadline</div><input id="deadline" type="datetime-local"></div>
+<button id="createBtn" class="btn btn-primary" style="margin-top:0.5rem">Generate Spec + Lock Stake</button>
+</div>
+</div>
+<div class="card">
+<h2 style="margin-bottom:1rem;font-size:1.125rem">Submit Evidence</h2>
+<div style="display:flex;flex-direction:column;gap:0.75rem">
+<div><div class="label">Commitment ID</div><input id="evId" type="number" placeholder="1" class="mono"></div>
+<div><div class="label">Evidence (URL or hash)</div><input id="evData" type="text" placeholder="https://... or 0x..." class="mono"></div>
+<button id="evidenceBtn" class="btn">Submit Onchain + AI Audit</button>
+<div id="auditResult"></div>
+</div>
+</div>
+</div>
+<div>
+<div class="card">
+<h2 style="margin-bottom:1rem;font-size:1.125rem">Public Feed</h2>
+<div id="feed" style="max-height:600px;overflow-y:auto"><div class="label" style="text-align:center;padding:2rem">Loading commitments...</div></div>
+</div>
+</div>
+</div>
+</div>
+<div id="toast" style="display:none" class="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.min.umd.js"></script>
+<script>
+var RPC="https://testnet-rpc.monad.xyz";
+var CONTRACT_ADDR="0x011189f535F744EC9A7a499F20df99f6CAdF1D25";
+var ABI=[{"inputs":[],"name":"nextId","outputs":[{"type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"name":"specHash","type":"bytes32"},{"name":"vType","type":"uint8"},{"name":"counterparty","type":"address"},{"name":"deadlineSeconds","type":"uint256"}],"name":"createCommitment","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"name":"id","type":"uint256"},{"name":"evidenceHash","type":"bytes32"}],"name":"submitEvidence","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"name":"id","type":"uint256"}],"name":"challenge","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"name":"id","type":"uint256"},{"name":"creatorWins","type":"bool"}],"name":"settle","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"name":"id","type":"uint256"},{"indexed":true,"name":"creator","type":"address"},{"name":"specHash","type":"bytes32"},{"name":"vType","type":"uint8"},{"name":"stake","type":"uint256"},{"name":"deadline","type":"uint256"}],"name":"CommitmentCreated","type":"event"}];
+var provider=null,signer=null,contract=null,walletAddr=null;
+
+function toast(msg,ms){var t=document.getElementById("toast");t.textContent=msg;t.style.display="block";setTimeout(function(){t.style.display="none";},ms||4000);}
+
+async function connect(){
+try{
+if(!window.ethereum){toast("No wallet found. Install MetaMask or use a Web3 browser.");return;}
+var accs=await window.ethereum.request({method:"eth_requestAccounts"});
+walletAddr=accs[0];
+document.getElementById("walletAddr").textContent=walletAddr.substring(0,6)+"..."+walletAddr.substring(38);
+document.getElementById("connectBtn").textContent="Connected";
+document.getElementById("connectBtn").disabled=true;
+provider=new ethers.BrowserProvider(window.ethereum);
+signer=await provider.getSigner();
+contract=new ethers.Contract(CONTRACT_ADDR,ABI,signer);
+var bal=await provider.getBalance(walletAddr);
+document.getElementById("balance").textContent=parseFloat(ethers.formatEther(bal)).toFixed(3)+" MON";
+toast("Wallet connected!");
+loadFeed();
+}catch(e){toast("Connect failed: "+e.message);}
+}
+
+document.getElementById("connectBtn").addEventListener("click",connect);
+
+document.getElementById("createBtn").addEventListener("click",async function(){
+if(!signer){toast("Connect wallet first");return;}
+var btn=this;btn.classList.add("loading");btn.textContent="Generating...";
+try{
+var claim=document.getElementById("claimText").value;
+var cp=document.getElementById("counterparty").value;
+var vt=document.getElementById("vType").value;
+var st=document.getElementById("stake").value;
+var dl=document.getElementById("deadline").value;
+if(!claim||!cp||!dl){toast("Fill in claim, counterparty, and deadline");return;}
+var resp=await fetch("/api/commitments/spec",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({claim_text:claim,creator_address:walletAddr,counterparty_address:cp})});
+var data=await resp.json();
+if(data.error)throw new Error(data.detail||data.error);
+toast("AI spec generated. Confirm transaction...");
+var deadlineSec=Math.floor(new Date(dl).getTime()/1000);
+var stakeWei=ethers.parseEther(st);
+var tx=await contract.createCommitment(data.spec_hash,parseInt(vt),cp,deadlineSec,{value:stakeWei});
+toast("TX sent: "+tx.hash.substring(0,10)+"...");
+await tx.wait();
+toast("Commitment locked onchain!");
+loadFeed();
+}catch(e){toast("Failed: "+e.message);}
+finally{btn.classList.remove("loading");btn.textContent="Generate Spec + Lock Stake";}
+});
+
+document.getElementById("evidenceBtn").addEventListener("click",async function(){
+if(!signer){toast("Connect wallet first");return;}
+var btn=this;btn.classList.add("loading");
+try{
+var id=parseInt(document.getElementById("evId").value);
+var ev=document.getElementById("evData").value;
+if(!id||!ev){toast("Enter commitment ID and evidence");return;}
+var evHash="0x"+"0".repeat(64);
+if(ev.startsWith("0x")&&ev.length===66){evHash=ev;}
+else{
+var buf=new TextEncoder().encode(ev);
+var hashBuf=await crypto.subtle.digest("SHA-256",buf);
+evHash="0x"+Array.from(new Uint8Array(hashBuf)).map(function(b){return b.toString(16).padStart(2,"0");}).join("");
+}
+var tx=await contract.submitEvidence(id,evHash);
+toast("Evidence submitted. Confirm tx...");
+await tx.wait();
+toast("Evidence onchain. Running AI audit...");
+var claim=document.getElementById("claimText").value||"verification";
+var aResp=await fetch("/api/evidence/audit",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({claim_text:claim,evidence:{hash:evHash,url:ev},verification_type:"web"})});
+var audit=await aResp.json();
+var ar=document.getElementById("auditResult");
+if(audit.verdict){
+var cls=(audit.verdict==="supported"||audit.verdict==="pass")?"verdict-pass":"verdict-fail";
+var conf=audit.confidence!==undefined?Math.round(audit.confidence*100):"?";
+ar.innerHTML='<div class="verdict '+cls+'"><div class="label">AI Verdict</div><strong>'+audit.verdict+'</strong> ('+conf+'% confidence)<br><span style="font-size:0.85rem;color:var(--muted)">'+(audit.reasoning||audit.error||"")+'</span></div>';
+}
+}catch(e){toast("Failed: "+e.message);}
+finally{btn.classList.remove("loading");}
+});
+
+async function loadFeed(){
+try{
+var p=new ethers.JsonRpcProvider(RPC);
+var c=new ethers.Contract(CONTRACT_ADDR,ABI,p);
+var topic=ethers.id("CommitmentCreated(uint256,address,bytes32,uint8,uint256,uint256)");
+var events=await p.getLogs({address:CONTRACT_ADDR,topics:[topic],fromBlock:0,toBlock:"latest"});
+var feed=document.getElementById("feed");
+if(events.length===0){
+feed.innerHTML='<div class="label" style="text-align:center;padding:2rem">No commitments yet. Create the first one!</div>';
+return;
+}
+feed.innerHTML=events.reverse().map(function(e){
+try{
+var id=parseInt(e.topics[1],16);
+var creatorAddr="0x"+e.topics[2].substring(26);
+var decoded=c.interface.parseLog(e);
+var stakeVal=ethers.formatEther(decoded.args.stake);
+var dlDate=new Date(parseInt(decoded.args.deadline)*1000);
+var isExpired=Date.now()>dlDate.getTime();
+var badgeCls=isExpired?"badge-expired":"badge-active";
+var status=isExpired?"Expired":"Active";
+return '<div class="feed-item"><div style="display:flex;justify-content:space-between;align-items:start"><div><div style="font-weight:500">Commitment #'+id+'</div><div class="mono" style="font-size:0.75rem;color:var(--muted)">'+creatorAddr.substring(0,8)+'...'+creatorAddr.substring(36)+'</div><div style="font-size:0.8rem;color:var(--muted);margin-top:0.25rem">Due: '+dlDate.toLocaleDateString()+'</div></div><div style="text-align:right"><span class="badge '+badgeCls+'">'+status+'</span><div style="font-size:0.9rem;margin-top:0.25rem;font-weight:500">'+parseFloat(stakeVal).toFixed(3)+' MON</div></div></div></div>';
+}catch(err){return '';}
+}).join('');
+}catch(e){
+document.getElementById("feed").innerHTML='<div class="label" style="text-align:center;padding:2rem">Failed to load feed: '+e.message+'</div>';
+}
+}
+
+async function checkAI(){
+try{
+var r=await fetch("/api/health");
+var d=await r.json();
+document.getElementById("aiStatus").textContent=d.venice_configured?"Venice + three.ws Online":"Offline";
+}catch(e){document.getElementById("aiStatus").textContent="Check failed";}
+}
+
+loadFeed();
+checkAI();
+</script>
+</body>
+</html>
