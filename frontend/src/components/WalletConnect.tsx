@@ -1,13 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAccount, useBalance, useDisconnect, useConnect } from 'wagmi'
-import { usePara } from '@getpara/react-sdk'
+import { useModal } from '@getpara/react-sdk'
 import { shortAddr } from '../lib/contract'
-
-declare global {
-  interface Window { __PARA_API_KEY__?: string }
-}
-
-const HAS_PARA = !!(import.meta.env.VITE_PARA_API_KEY || (typeof window !== 'undefined' && window.__PARA_API_KEY__))
 
 export default function WalletConnect() {
   const { address, isConnected } = useAccount()
@@ -16,34 +10,17 @@ export default function WalletConnect() {
   const { data: balance } = useBalance({ address, watch: true })
   const [copied, setCopied] = useState(false)
 
-  // Para SDK hook — must be called unconditionally (Rules of Hooks)
-  // usePara returns null/empty when outside ParaProvider
-  let paraModal: { openModal?: () => void; closeModal?: () => void } = {}
-  let paraClient: any = null
-  try {
-    const para = usePara()
-    paraModal.openModal = para?.openModal
-    paraModal.closeModal = para?.closeModal
-    paraClient = para?.para
-  } catch {
-    // usePara not available (no ParaProvider or key absent)
-  }
+  // Para SDK modal hook — called unconditionally (Rules of Hooks).
+  // useModal() returns undefined when outside ParaProvider context,
+  // which is safe — we fall back to wagmi connect.
+  const paraModal = useModal()
+  const openModal = paraModal?.openModal || null
 
   const handleConnect = async () => {
-    // Priority 1: Para SDK openModal
-    if (paraModal.openModal) {
-      paraModal.openModal()
+    // Priority: Para SDK openModal (opens email/social/external wallet selector)
+    if (openModal) {
+      openModal()
       return
-    }
-
-    // Priority 2: Para client signIn/signUp
-    if (paraClient && typeof paraClient.signIn === 'function') {
-      try {
-        await paraClient.signIn()
-        return
-      } catch (err) {
-        console.error('[vouch] Para signIn failed:', err)
-      }
     }
 
     // Fallback: wagmi connect (MetaMask/injected)
