@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAccount, useBalance, useDisconnect, useConnect } from 'wagmi'
+import { usePara } from '@getpara/react-sdk'
 import { shortAddr } from '../lib/contract'
 
 declare global {
@@ -14,35 +15,34 @@ export default function WalletConnect() {
   const { connectors, connectAsync, isPending } = useConnect()
   const { data: balance } = useBalance({ address, watch: true })
   const [copied, setCopied] = useState(false)
-  const [paraOpen, setParaOpen] = useState(false)
 
-  // Monitor Para modal state
-  useEffect(() => {
-    if (!HAS_PARA) return
-    const interval = setInterval(() => {
-      const modal = document.querySelector('cpsl-auth-modal')
-      if (modal) {
-        const isOpen = modal.getAttribute('open') === 'true'
-        if (isOpen !== paraOpen) setParaOpen(isOpen)
-      }
-    }, 300)
-    return () => clearInterval(interval)
-  }, [paraOpen])
+  // Para SDK hook — must be called unconditionally (Rules of Hooks)
+  // usePara returns null/empty when outside ParaProvider
+  let paraModal: { openModal?: () => void; closeModal?: () => void } = {}
+  let paraClient: any = null
+  try {
+    const para = usePara()
+    paraModal.openModal = para?.openModal
+    paraModal.closeModal = para?.closeModal
+    paraClient = para?.para
+  } catch {
+    // usePara not available (no ParaProvider or key absent)
+  }
 
   const handleConnect = async () => {
-    if (HAS_PARA) {
-      // Para SDK: open the auth modal directly via the web component
-      const modal = document.querySelector('cpsl-auth-modal') as HTMLElement & { openModal?: () => void } | null
-      if (modal) {
-        // Try Para's API method first
-        if (typeof (modal as any).openModal === 'function') {
-          ;(modal as any).openModal()
-          return
-        }
-        // Fallback: set open attribute + dispatch event
-        modal.setAttribute('open', 'true')
-        modal.dispatchEvent(new CustomEvent('para:open'))
+    // Priority 1: Para SDK openModal
+    if (paraModal.openModal) {
+      paraModal.openModal()
+      return
+    }
+
+    // Priority 2: Para client signIn/signUp
+    if (paraClient && typeof paraClient.signIn === 'function') {
+      try {
+        await paraClient.signIn()
         return
+      } catch (err) {
+        console.error('[vouch] Para signIn failed:', err)
       }
     }
 
@@ -75,11 +75,11 @@ export default function WalletConnect() {
       <button
         type="button"
         onClick={handleConnect}
-        disabled={isPending || paraOpen}
+        disabled={isPending}
         className="btn btn-primary btn-sm"
         aria-label="Connect wallet"
       >
-        {isPending || paraOpen ? 'Connecting…' : 'Connect Wallet'}
+        {isPending ? 'Connecting…' : 'Connect Wallet'}
       </button>
     )
   }
