@@ -1,0 +1,2 @@
+import{w as t}from"./index-CdBoe4nT.js";import{readContract as r}from"./read-contract-EVjeD8eZ.js";import"./index-CjKM01T5.js";import"./index-BWjYtsI9.js";const a="0x313ce567",e=[],n=[{type:"uint8"}];async function o(c){return r({contract:c.contract,method:[a,e,n],params:[]})}async function N(c){return t(()=>o(c),{cacheKey:`${c.contract.chain.id}:${c.contract.address}:decimals`,cacheTime:Number.POSITIVE_INFINITY})}export{N as decimals};
+//# sourceMappingURL=decimals-DuZ59faO.js.map

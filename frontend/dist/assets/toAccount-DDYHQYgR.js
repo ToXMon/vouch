@@ -1,2 +1,0 @@
-import{j as n,I as a}from"./index-fTRhyOR6.js";function i(s){if(typeof s=="string"){if(!n(s,{strict:!1}))throw new a({address:s});return{address:s,type:"json-rpc"}}if(!n(s.address,{strict:!1}))throw new a({address:s.address});return{address:s.address,nonceManager:s.nonceManager,sign:s.sign,signAuthorization:s.signAuthorization,signMessage:s.signMessage,signTransaction:s.signTransaction,signTypedData:s.signTypedData,source:"custom",type:"local"}}export{i as t};
-//# sourceMappingURL=toAccount-DDYHQYgR.js.map
