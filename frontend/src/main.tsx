@@ -1,4 +1,4 @@
-import { StrictMode, useState, useEffect, type ReactElement } from 'react'
+import { StrictMode, useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -33,8 +33,8 @@ const wagmiConfig = createConfig({
   multiInjectedProviderDiscovery: true,
 })
 
-// Synchronous inner app — ALWAYS renders immediately with wagmi
-function InnerApp() {
+// Core app tree — providers in correct nesting order
+function AppTree() {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
@@ -46,27 +46,19 @@ function InnerApp() {
   )
 }
 
-// Para wrapper — loads async, upgrades the tree when ready
+// Para wrapper — loads async, wraps app tree when ready
 function ParaWrapper({ children }: { children: React.ReactNode }) {
   const [ParaComponent, setParaComponent] = useState<React.ComponentType<{ children: React.ReactNode }> | null>(null)
-  const [paraFailed, setParaFailed] = useState(false)
 
   useEffect(() => {
     if (!PARA_API_KEY) return
-
     let cancelled = false
-
     import('@getpara/react-sdk')
       .then(({ ParaProvider, Environment }) => {
         if (cancelled) return
-
-        // Create a wrapper component that applies ParaProvider
         const Wrapper = ({ children }: { children: React.ReactNode }) => (
           <ParaProvider
-            paraClientConfig={{
-              apiKey: PARA_API_KEY,
-              env: Environment.BETA,
-            }}
+            paraClientConfig={{ apiKey: PARA_API_KEY, env: Environment.BETA }}
             config={{ appName: 'Vouch' }}
             paraModalConfig={{
               oAuthMethods: ['GOOGLE', 'TWITTER', 'APPLE'],
@@ -77,9 +69,7 @@ function ParaWrapper({ children }: { children: React.ReactNode }) {
               evmConnector: {
                 config: {
                   chains: [monadTestnet],
-                  transports: {
-                    [monadTestnet.id]: http(MONAD_TESTNET_RPC),
-                  },
+                  transports: { [monadTestnet.id]: http(MONAD_TESTNET_RPC) },
                 },
               },
               wallets: ['METAMASK', 'COINBASE', 'WALLETCONNECT'],
@@ -88,41 +78,29 @@ function ParaWrapper({ children }: { children: React.ReactNode }) {
             {children}
           </ParaProvider>
         )
-
         setParaComponent(() => Wrapper)
-        console.info('[vouch] Para SDK loaded — embedded wallets available')
+        console.info('[vouch] Para SDK loaded')
       })
       .catch((err) => {
-        if (cancelled) return
-        console.warn('[vouch] Para SDK failed to load — using wagmi only:', err)
-        setParaFailed(true)
+        console.warn('[vouch] Para SDK failed:', err)
       })
-
     return () => { cancelled = true }
   }, [])
 
-  // No Para key or Para failed — render wagmi-only tree directly
-  if (!PARA_API_KEY || paraFailed) {
-    return <>{children}</>
-  }
-
-  // Para loaded — wrap children with ParaProvider
+  // Always render children immediately. Para wraps when ready.
   if (ParaComponent) {
     return <ParaComponent>{children}</ParaComponent>
   }
-
-  // Para loading — render wagmi-only tree immediately (no blank screen)
   return <>{children}</>
 }
 
-// Render IMMEDIATELY with wagmi — no async, no blank screen
-const rootElement = document.getElementById('root')!
-const root = createRoot(rootElement)
-
-root.render(
+// Render — QueryClientProvider is OUTERMOST, always available
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ParaWrapper>
-      <InnerApp />
-    </ParaWrapper>
+    <QueryClientProvider client={queryClient}>
+      <ParaWrapper>
+        <AppTree />
+      </ParaWrapper>
+    </QueryClientProvider>
   </StrictMode>,
 )
