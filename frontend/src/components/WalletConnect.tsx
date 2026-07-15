@@ -2,11 +2,6 @@ import { useState } from 'react'
 import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 import { shortAddr } from '../lib/contract'
 
-/**
- * Para wallet connect button. Uses wagmi hooks (ParaProvider v2 wires up the
- * wagmi connector internally). The first connector in the wagmi config is the
- * Para embedded-wallet connector — clicking connect triggers the Para modal.
- */
 export default function WalletConnect() {
   const { address, isConnected } = useAccount()
   const { disconnect } = useDisconnect()
@@ -14,14 +9,15 @@ export default function WalletConnect() {
   const { data: balance } = useBalance({ address, watch: true })
   const [copied, setCopied] = useState(false)
 
-  // ParaProvider v2 exposes its connector as the first entry; the Para modal
-  // opens automatically when connect() is called with it.
-  const paraConnector = connectors[0]
-
   const handleConnect = async () => {
-    if (!paraConnector) return
+    // Try injected wallet first, fall back to first available connector
+    const connector = connectors.find(c => c.type === 'injected') ?? connectors[0]
+    if (!connector) {
+      console.error('[vouch] No wallet connector available')
+      return
+    }
     try {
-      await connectAsync({ connector: paraConnector })
+      await connectAsync({ connector })
     } catch (err) {
       console.error('[vouch] wallet connect failed:', err)
     }
@@ -34,42 +30,29 @@ export default function WalletConnect() {
       setCopied(true)
       setTimeout(() => setCopied(false), 1200)
     } catch {
-      /* clipboard blocked — silent fail */
+      /* clipboard blocked */
     }
   }
 
-  if (!isConnected || !address) {
+  if (!isConnected) {
     return (
       <button
         type="button"
         onClick={handleConnect}
-        disabled={isPending || !paraConnector}
+        disabled={isPending}
         className="btn btn-primary btn-sm"
-        aria-label="Connect Para wallet"
+        aria-label="Connect wallet"
       >
-        {isPending ? (
-          <>
-            <span className="spin" aria-hidden="true" style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid var(--primary-fg)', borderTopColor: 'transparent' }} />
-            Connecting…
-          </>
-        ) : (
-          <>
-            <svg className="" width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M11 5V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              <rect x="6" y="6" width="8" height="8" rx="1" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-            Connect Wallet
-          </>
-        )}
+        {isPending ? 'Connecting…' : 'Connect Wallet'}
       </button>
     )
   }
 
-  const bal = balance?.formatted ? Number(balance.formatted).toFixed(3) : '0.000'
+  const bal = balance?.formatted ? Number(balance.formatted).toFixed(2) : '0.00'
   const symbol = balance?.symbol ?? 'MON'
 
   return (
-    <div className="row">
+    <div className="wallet-cluster">
       <div
         className="wallet-pill wallet-balance-pill"
         title={`${bal} ${symbol}`}
