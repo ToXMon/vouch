@@ -17,7 +17,7 @@
 
 | Service | URL | Status |
 |---------|-----|--------|
-| **Frontend** | https://71ofkdl1pdeff7plsbgjq50i0o.ingress.oregon.skyfall.cz | ✅ Live |
+| **Frontend (React)** | https://71ofkdl1pdeff7plsbgjq50i0o.ingress.oregon.skyfall.cz | ✅ Live (React 18 + Vite) |
 | **Agent Runtime** | https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz | ✅ Live |
 | **API Docs (Swagger)** | https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz/docs | ✅ Live |
 | **Health Check** | https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz/api/health | ✅ Live |
