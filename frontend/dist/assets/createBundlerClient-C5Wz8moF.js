@@ -1,0 +1,2 @@
+import{D as l}from"./index-x1VoBnwS.js";import{b as s}from"./bundler-55zeadvj.js";function x(n){const{client:t,dataSuffix:e,key:a="bundler",name:i="Bundler Client",paymaster:r,paymasterContext:c,transport:o,userOperation:u}=n;return Object.assign(l({...n,chain:n.chain??(t==null?void 0:t.chain),key:a,name:i,transport:o,type:"bundlerClient"}),{client:t,dataSuffix:e??(t==null?void 0:t.dataSuffix),paymaster:r,paymasterContext:c,userOperation:u}).extend(s)}export{x as c};
+//# sourceMappingURL=createBundlerClient-C5Wz8moF.js.map
