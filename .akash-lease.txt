@@ -1,1 +1,19 @@
-https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz
+# Vouch — Live Akash Deployments
+# ============================================
+
+# Agent Runtime (FastAPI + Venice + three.ws)
+RUNTIME_DSEQ=27720708
+RUNTIME_PROVIDER=akash143m6954tvzh98m97g35f8xrwfagn0ze5tz43jq
+RUNTIME_URI=https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz
+RUNTIME_HEALTH=jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz/api/health
+RUNTIME_DOCS=jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz/docs
+
+# Frontend (nginx serving vanilla HTML)
+FRONTEND_DSEQ=27727058
+FRONTEND_PROVIDER=akash143m6954tvzh98m97g35f8xrwfagn0ze5tz43jq
+FRONTEND_URI=https://71ofkdl1pdeff7plsbgjq50i0o.ingress.oregon.skyfall.cz
+
+# Contract (Monad testnet)
+CONTRACT_ADDRESS=0x011189f535F744EC9A7a499F20df99f6CAdF1D25
+CHAIN_ID=10143
+RPC_URL=https://testnet-rpc.monad.xyz

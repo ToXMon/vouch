@@ -1,4 +1,8 @@
 ---
+# Vouch Frontend — Akash SDL
+# Static nginx serving vanilla HTML. No build step required.
+# Aligned to match the runtime SDL format that successfully received bids.
+
 version: "2.0"
 
 services:
@@ -9,10 +13,6 @@ services:
         as: 80
         to:
           - global: true
-    params:
-      storage:
-        data:
-          mount: /usr/share/nginx/html
 
 profiles:
   compute:
@@ -23,19 +23,15 @@ profiles:
         memory:
           size: 256Mi
         storage:
-          - size: 1Gi
+          size: 1Gi
 
   placement:
     akash:
-      attributes:
-        host: akash
-      signedBy:
-        anyOf:
-          - "akash1365yvmc4s7awdyj3neds9j1vwq8tixz9ulkkae"
+      # No signedBy/attribute filters — accept bids from any provider.
       pricing:
         vouch-frontend:
           denom: uact
-          amount: 1000000
+          amount: 1000
 
 deployment:
   vouch-frontend:
