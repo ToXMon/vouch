@@ -210,13 +210,20 @@ export async function fetchIsInChallengeWindow(id: bigint): Promise<boolean> {
   return data as boolean
 }
 
-/** Fetch all CommitmentCreated logs (drives the public feed). */
-export async function fetchCommitmentCreatedLogs(fromBlock = 0n): Promise<CommitmentCreatedLog[]> {
+/** Fetch recent CommitmentCreated logs (drives the public feed).
+ *  Monad testnet RPC limits eth_getLogs to ~5k-50k block range.
+ *  We query the last 50,000 blocks (~17h at 1.2s/block) to stay safe. */
+export async function fetchCommitmentCreatedLogs(fromBlock?: bigint): Promise<CommitmentCreatedLog[]> {
   const client = getPublicClient()
+  const latestBlock = await client.getBlockNumber()
+  // Default: last 50,000 blocks. If fromBlock provided, use min(fromBlock, latest - 50000).
+  const safeFromBlock = fromBlock !== undefined
+    ? (fromBlock > latestBlock - 50_000n ? fromBlock : latestBlock - 50_000n)
+    : (latestBlock > 50_000n ? latestBlock - 50_000n : 0n)
   const logs = await client.getLogs({
     address: VOUCH_CONTRACT_ADDRESS,
     event: VOUCH_ABI[7] as never, // CommitmentCreated
-    fromBlock,
+    fromBlock: safeFromBlock,
     toBlock: 'latest',
   })
   return logs.map((log: Log) => ({
