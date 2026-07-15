@@ -1,0 +1,44 @@
+---
+version: "2.0"
+
+services:
+  vouch-frontend:
+    image: ghcr.io/toxmon/vouch-frontend:latest
+    expose:
+      - port: 80
+        as: 80
+        to:
+          - global: true
+    params:
+      storage:
+        data:
+          mount: /usr/share/nginx/html
+
+profiles:
+  compute:
+    vouch-frontend:
+      resources:
+        cpu:
+          units: 0.25
+        memory:
+          size: 256Mi
+        storage:
+          - size: 1Gi
+
+  placement:
+    akash:
+      attributes:
+        host: akash
+      signedBy:
+        anyOf:
+          - "akash1365yvmc4s7awdyj3neds9j1vwq8tixz9ulkkae"
+      pricing:
+        vouch-frontend:
+          denom: uact
+          amount: 1000000
+
+deployment:
+  vouch-frontend:
+    akash:
+      profile: vouch-frontend
+      count: 1
