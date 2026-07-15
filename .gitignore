@@ -13,7 +13,7 @@ private*key*
 *wallet*.json
 cache/
 out/
-lib/
+/lib/
 broadcast/
 node_modules/
 dist/
