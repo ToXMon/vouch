@@ -1,7 +1,7 @@
-// Vouch Combined Worker — serves React app + handles API (Venice AI + three.ws)
+// Vouch Combined Worker -- serves React app + handles API (Venice AI + three.ws)
 const VENICE_URL = 'https://api.venice.ai/api/v1/chat/completions';
 const THREEWS_URL = 'https://three.ws/api/x402/fact-check';
-const CDN_BASE = 'https://cdn.jsdelivr.net/gh/ToXMon/vouch@main/frontend/dist';
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/ToXMon/vouch@b59f873/frontend/dist';
 
 function cors() {
   return {
@@ -102,6 +102,9 @@ export default {
       let html = await cdnResp.text();
       html = html.split('src="/assets/').join('src="' + CDN_BASE + '/assets/');
       html = html.split('href="/assets/').join('href="' + CDN_BASE + '/assets/');
+      // Inject runtime env vars from worker secrets
+      const paraKey = env.PARA_API_KEY || '';
+      html = html.replace('</head>', '<script>window.__PARA_API_KEY__="' + paraKey + '";</script></head>');
       return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' } });
     }
 
