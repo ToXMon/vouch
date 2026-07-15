@@ -60,7 +60,7 @@ export default function WalletConnect() {
             </svg>
             Connect Wallet
           </>
-        )
+        )}
       </button>
     )
   }
