@@ -1,6 +1,12 @@
-import { useState } from 'react'
-import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
+import { useState, useEffect } from 'react'
+import { useAccount, useBalance, useDisconnect, useConnect } from 'wagmi'
 import { shortAddr } from '../lib/contract'
+
+declare global {
+  interface Window { __PARA_API_KEY__?: string }
+}
+
+const HAS_PARA = !!(import.meta.env.VITE_PARA_API_KEY || (typeof window !== 'undefined' && window.__PARA_API_KEY__))
 
 export default function WalletConnect() {
   const { address, isConnected } = useAccount()
@@ -8,12 +14,42 @@ export default function WalletConnect() {
   const { connectors, connectAsync, isPending } = useConnect()
   const { data: balance } = useBalance({ address, watch: true })
   const [copied, setCopied] = useState(false)
+  const [paraOpen, setParaOpen] = useState(false)
+
+  // Monitor Para modal state
+  useEffect(() => {
+    if (!HAS_PARA) return
+    const interval = setInterval(() => {
+      const modal = document.querySelector('cpsl-auth-modal')
+      if (modal) {
+        const isOpen = modal.getAttribute('open') === 'true'
+        if (isOpen !== paraOpen) setParaOpen(isOpen)
+      }
+    }, 300)
+    return () => clearInterval(interval)
+  }, [paraOpen])
 
   const handleConnect = async () => {
-    // Para SDK injects its connector via ParaProvider — use the first available
+    if (HAS_PARA) {
+      // Para SDK: open the auth modal directly via the web component
+      const modal = document.querySelector('cpsl-auth-modal') as HTMLElement & { openModal?: () => void } | null
+      if (modal) {
+        // Try Para's API method first
+        if (typeof (modal as any).openModal === 'function') {
+          ;(modal as any).openModal()
+          return
+        }
+        // Fallback: set open attribute + dispatch event
+        modal.setAttribute('open', 'true')
+        modal.dispatchEvent(new CustomEvent('para:open'))
+        return
+      }
+    }
+
+    // Fallback: wagmi connect (MetaMask/injected)
     const connector = connectors[0]
     if (!connector) {
-      console.error('[vouch] No wallet connector available — check Para API key')
+      console.error('[vouch] No wallet connector available')
       return
     }
     try {
@@ -39,11 +75,11 @@ export default function WalletConnect() {
       <button
         type="button"
         onClick={handleConnect}
-        disabled={isPending}
+        disabled={isPending || paraOpen}
         className="btn btn-primary btn-sm"
         aria-label="Connect wallet"
       >
-        {isPending ? 'Connecting…' : 'Connect Wallet'}
+        {isPending || paraOpen ? 'Connecting…' : 'Connect Wallet'}
       </button>
     )
   }
