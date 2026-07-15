@@ -12,5 +12,31 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      onwarn(warning, defaultHandler) {
+        // Suppress dynamic import resolution warnings from Web3 SDKs (Para, wagmi, viem)
+        // These are safe at runtime — Vite bundles everything, the warnings are false positives
+        if (warning.code === 'INVALID_ANNOTATION' || 
+            warning.code === 'UNRESOLVED_IMPORT' ||
+            warning.code === 'THIS_IS_UNDEFINED' ||
+            warning.message?.includes('rollupOptions.external') ||
+            warning.message?.includes('dynamic import') ||
+            warning.message?.includes('externally')) {
+          return
+        }
+        defaultHandler(warning)
+      },
+    },
+  },
+  optimizeDeps: {
+    include: [
+      '@getpara/react-sdk',
+      '@getpara/evm-wallet-connectors',
+      'wagmi',
+      'viem',
+      '@tanstack/react-query',
+      'axios',
+      'react-router-dom',
+    ],
   },
 })
