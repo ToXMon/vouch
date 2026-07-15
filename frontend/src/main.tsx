@@ -1,9 +1,11 @@
-import { StrictMode, useState, useEffect } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { http, createConfig, WagmiProvider } from 'wagmi'
 import { monadTestnet } from 'wagmi/chains'
+import { ParaProvider, Environment } from '@getpara/react-sdk'
+import '@getpara/react-sdk/styles.css'
 
 import App from './App.tsx'
 import './index.css'
@@ -25,6 +27,7 @@ const queryClient = new QueryClient({
   },
 })
 
+// Wagmi config — includes Para's EVM connector when Para key is present
 const wagmiConfig = createConfig({
   chains: [monadTestnet],
   transports: {
@@ -33,74 +36,49 @@ const wagmiConfig = createConfig({
   multiInjectedProviderDiscovery: true,
 })
 
-// Core app tree — providers in correct nesting order
-function AppTree() {
-  return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </QueryClientProvider>
-    </WagmiProvider>
-  )
-}
-
-// Para wrapper — loads async, wraps app tree when ready
-function ParaWrapper({ children }: { children: React.ReactNode }) {
-  const [ParaComponent, setParaComponent] = useState<React.ComponentType<{ children: React.ReactNode }> | null>(null)
-
-  useEffect(() => {
-    if (!PARA_API_KEY) return
-    let cancelled = false
-    import('@getpara/react-sdk')
-      .then(({ ParaProvider, Environment }) => {
-        if (cancelled) return
-        const Wrapper = ({ children }: { children: React.ReactNode }) => (
-          <ParaProvider
-            paraClientConfig={{ apiKey: PARA_API_KEY, env: Environment.BETA }}
-            config={{ appName: 'Vouch' }}
-            paraModalConfig={{
-              oAuthMethods: ['GOOGLE', 'TWITTER', 'APPLE'],
-              disablePhoneLogin: false,
-              recoverySecretStepEnabled: true,
-            }}
-            externalWalletConfig={{
-              evmConnector: {
-                config: {
-                  chains: [monadTestnet],
-                  transports: { [monadTestnet.id]: http(MONAD_TESTNET_RPC) },
-                },
-              },
-              wallets: ['METAMASK', 'COINBASE', 'WALLETCONNECT'],
-            }}
-          >
-            {children}
-          </ParaProvider>
-        )
-        setParaComponent(() => Wrapper)
-        console.info('[vouch] Para SDK loaded')
-      })
-      .catch((err) => {
-        console.warn('[vouch] Para SDK failed:', err)
-      })
-    return () => { cancelled = true }
-  }, [])
-
-  // Always render children immediately. Para wraps when ready.
-  if (ParaComponent) {
-    return <ParaComponent>{children}</ParaComponent>
+// Synchronous render — ParaProvider wraps everything when key is present
+function RootProviders({ children }: { children: React.ReactNode }) {
+  if (PARA_API_KEY) {
+    return (
+      <ParaProvider
+        paraClientConfig={{
+          apiKey: PARA_API_KEY,
+          env: Environment.BETA,
+        }}
+        config={{ appName: 'Vouch' }}
+        paraModalConfig={{
+          oAuthMethods: ['GOOGLE', 'TWITTER', 'APPLE'],
+          disablePhoneLogin: false,
+          recoverySecretStepEnabled: true,
+        }}
+        externalWalletConfig={{
+          evmConnector: {
+            config: {
+              chains: [monadTestnet],
+              transports: { [monadTestnet.id]: http(MONAD_TESTNET_RPC) },
+            },
+          },
+          wallets: ['METAMASK', 'COINBASE', 'WALLETCONNECT'],
+        }}
+      >
+        {children}
+      </ParaProvider>
+    )
   }
+  // No Para key — wagmi only (MetaMask/injected)
   return <>{children}</>
 }
 
-// Render — QueryClientProvider is OUTERMOST, always available
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ParaWrapper>
-        <AppTree />
-      </ParaWrapper>
+      <WagmiProvider config={wagmiConfig}>
+        <BrowserRouter>
+          <RootProviders>
+            <App />
+          </RootProviders>
+        </BrowserRouter>
+      </WagmiProvider>
     </QueryClientProvider>
   </StrictMode>,
 )
