@@ -189,7 +189,9 @@ try{
 var p=new ethers.JsonRpcProvider(RPC);
 var c=new ethers.Contract(CONTRACT_ADDR,ABI,p);
 var topic=ethers.id("CommitmentCreated(uint256,address,bytes32,uint8,uint256,uint256)");
-var events=await p.getLogs({address:CONTRACT_ADDR,topics:[topic],fromBlock:0,toBlock:"latest"});
+var latestBlock=await p.getBlockNumber();
+var fromBlock=Math.max(0,latestBlock-90);
+var events=await p.getLogs({address:CONTRACT_ADDR,topics:[topic],fromBlock:fromBlock,toBlock:"latest"});
 var feed=document.getElementById("feed");
 if(events.length===0){
 feed.innerHTML='<div class="label" style="text-align:center;padding:2rem">No commitments yet. Create the first one!</div>';
