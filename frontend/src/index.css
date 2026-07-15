@@ -834,3 +834,63 @@ strong { font-weight: 600; }
   }
   .skeleton { animation: none; background: var(--surface-2); }
 }
+
+/* ─── Counterparty address UX ─── */
+.label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.label-help-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s var(--ease-out, ease-out);
+  padding: 0;
+  flex-shrink: 0;
+}
+.label-help-btn:hover {
+  background: var(--primary-dim);
+  color: var(--primary);
+  border-color: var(--primary-line);
+}
+.field-help-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-sm);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.field-help-card strong {
+  color: var(--text);
+}
+.field-help-card em {
+  color: var(--text-dim);
+}
+.input-with-action {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.input-with-action .input {
+  flex: 1;
+  min-width: 0;
+}
+.field-success {
+  font-size: 0.78rem;
+  color: var(--success);
+  font-family: var(--font-mono);
+  margin-top: 0.3rem;
+}

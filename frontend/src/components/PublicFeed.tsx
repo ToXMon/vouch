@@ -22,7 +22,7 @@ function statusFromLog(log: CommitmentCreatedLog): 'active' | 'expired' {
 function FeedCard({ log }: { log: CommitmentCreatedLog }) {
   const status = statusFromLog(log)
   const remaining = secondsUntil(log.deadline)
-  const isMyCommitment = !!window && log.creator.toLowerCase() === (window as unknown as { ethereum?: { selectedAddress?: string } }).ethereum?.selectedAddress?.toLowerCase()
+  const isMyCommitment = !!address && log.creator.toLowerCase() === address.toLowerCase()
   const isSelf = log.counterparty === '0x0000000000000000000000000000000000000000'
 
   return (
@@ -138,8 +138,6 @@ function FeedSkeleton() {
 }
 
 export default function PublicFeed({ address, isConnected }: Props) {
-  void address
-  void isConnected
 
   const { data: logs, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['commitment-created-logs'],
@@ -181,8 +179,13 @@ export default function PublicFeed({ address, isConnected }: Props) {
             </svg>
           </div>
           <h2>No commitments yet</h2>
-          <p>Be the first to stake on a personal claim.</p>
-          <Link to="/create" className="btn btn-primary btn-sm mt-2">Create a commitment →</Link>
+          <p>Be the first to stake MON on a personal claim. Create a commitment, lock your stake onchain, and let AI verify the outcome.</p>
+          <div className="empty-state-actions" style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', marginTop: '1rem' }}>
+            <Link to="/create" className="btn btn-primary btn-sm">Create a commitment →</Link>
+          </div>
+          {!isConnected && (
+            <p className="text-dim" style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>Connect your wallet first to get started.</p>
+          )}
         </div>
       )}
 

@@ -34,6 +34,7 @@ const DEADLINE_OPTIONS: { label: string; seconds: bigint }[] = [
 export default function CreateCommitment({ address, isConnected, balanceMon }: Props) {
   const [claim, setClaim] = useState('')
   const [counterparty, setCounterparty] = useState('')
+  const [showCounterpartyHelp, setShowCounterpartyHelp] = useState(false)
   const [vType, setVType] = useState<number>(VerificationType.Photo)
   const [deadlineIdx, setDeadlineIdx] = useState(1)
   const [stakeMon, setStakeMon] = useState('0.1')
@@ -51,6 +52,16 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
     parseFloat(stakeMon) > 0 &&
     !submitting
 
+  const handlePasteCounterparty = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      const trimmed = text.trim()
+      if (trimmed) setCounterparty(trimmed)
+    } catch {
+      // clipboard read blocked — user types manually
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!valid || !address) return
@@ -59,8 +70,6 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
     setSubmitting(true)
 
     try {
-      // 1. Generate AI spec + spec_hash via Agent Runtime
-      const vtypeOption = VTYPE_OPTIONS.find((o) => o.value === vType)!
       const { spec_hash } = await generateSpec({
         claim_text: claim.trim(),
         creator_address: address,
@@ -69,7 +78,6 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
 
       if (!spec_hash) throw new Error('No spec hash returned from agent runtime')
 
-      // 2. Create commitment onchain — stake sent as msg.value
       const stakeWei = parseEther(stakeMon)
       const deadlineSeconds = DEADLINE_OPTIONS[deadlineIdx].seconds
 
@@ -82,10 +90,8 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
       })
 
       setTxHash(hash)
-      void spec_hash // spec content retained for evidence-audit step later; not displayed here
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to create commitment'
-      // Strip wagmi contract-revert noise for a cleaner message
       const short = msg.includes('revert') ? msg.slice(0, 200) : msg
       setError(short)
     } finally {
@@ -99,7 +105,7 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
         <div className="card text-center">
           <h1 className="mb-1">Connect your wallet to create a commitment</h1>
           <p className="text-muted">
-            Vouch uses Para embedded wallets on Monad testnet. Connect to stake on your claim.
+            Vouch uses Para embedded wallets on Monad testnet. Sign in with email, social, or connect MetaMask to stake on your claim.
           </p>
         </div>
       </div>
@@ -134,21 +140,50 @@ export default function CreateCommitment({ address, isConnected, balanceMon }: P
         </div>
 
         <div className="field">
-          <label htmlFor="counterparty" className="label">Counterparty address</label>
-          <input
-            id="counterparty"
-            className="input mono"
-            placeholder="0x…"
-            value={counterparty}
-            onChange={(e) => setCounterparty(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-          />
+          <div className="label-row">
+            <label htmlFor="counterparty" className="label">Who is on the other side?</label>
+            <button
+              type="button"
+              className="label-help-btn"
+              onClick={() => setShowCounterpartyHelp(!showCounterpartyHelp)}
+              aria-label="What is a counterparty?"
+            >?</button>
+          </div>
+          {showCounterpartyHelp && (
+            <div className="field-help-card">
+              <p><strong>The counterparty</strong> is the person you are making this commitment with. They can challenge your claim if they disagree.</p>
+              <p style={{ marginTop: '0.5rem' }}><strong>How to find their address:</strong> Ask them to copy their wallet address from Vouch or MetaMask, then paste it below.</p>
+              <p style={{ marginTop: '0.5rem' }} className="text-dim"><em>For testing: any valid Monad testnet address works — including your own second wallet.</em></p>
+            </div>
+          )}
+          <div className="input-with-action">
+            <input
+              id="counterparty"
+              className="input mono"
+              placeholder="Paste their 0x address here…"
+              value={counterparty}
+              onChange={(e) => setCounterparty(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+            />
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={handlePasteCounterparty}
+              title="Paste from clipboard"
+            >Paste</button>
+          </div>
+          {counterparty && isAddress(counterparty) && counterparty.toLowerCase() !== (address?.toLowerCase() ?? '') && (
+            <p className="field-success">✓ Valid address: {counterparty.slice(0, 6)}…{counterparty.slice(-4)}</p>
+          )}
           {counterparty && !isAddress(counterparty) && (
-            <p className="field-error">Enter a valid 0x address</p>
+            <p className="field-error">That does not look like a valid wallet address. It should be 42 characters starting with 0x.</p>
           )}
           {counterparty && address && counterparty.toLowerCase() === address.toLowerCase() && (
-            <p className="field-error">Counterparty cannot be your own address</p>
+            <p className="field-error">You cannot be your own counterparty. Paste a different wallet address.</p>
+          )}
+          {!counterparty && (
+            <p className="field-hint">The person who can challenge your claim. Paste their Monad testnet address.</p>
           )}
         </div>
 

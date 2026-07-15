@@ -10,10 +10,10 @@ export default function WalletConnect() {
   const [copied, setCopied] = useState(false)
 
   const handleConnect = async () => {
-    // Try injected wallet first, fall back to first available connector
-    const connector = connectors.find(c => c.type === 'injected') ?? connectors[0]
+    // Para SDK injects its connector via ParaProvider — use the first available
+    const connector = connectors[0]
     if (!connector) {
-      console.error('[vouch] No wallet connector available')
+      console.error('[vouch] No wallet connector available — check Para API key')
       return
     }
     try {
