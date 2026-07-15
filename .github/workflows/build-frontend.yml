@@ -13,12 +13,67 @@ env:
   IMAGE_NAME: toxmon/vouch-frontend
 
 jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm install --no-audit --no-fund
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npx vite build
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
+
+      - name: Verify no bare imports in bundle
+        working-directory: frontend
+        run: |
+          BUNDLE=$(ls dist/assets/index-*.js | head -1)
+          echo "Checking bundle: $BUNDLE"
+          BARE=$(grep -oP 'from"[a-z@][^":/]*"' "$BUNDLE" | sort -u)
+          if [ -z "$BARE" ]; then
+            echo "✅ No bare imports found - bundle is self-contained"
+          else
+            echo "❌ Bare imports found:"
+            echo "$BARE"
+            echo "These will fail in browsers without an import map"
+            exit 1
+          fi
+
+      - name: Commit dist/ to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f frontend/dist/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "ci: rebuild frontend dist/ [skip ci]
+
+          Bundled with inlineDynamicImports: true
+          Zero bare module specifiers"
+            git push
+          fi
+
   build-and-push:
+    needs: build-and-commit
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
