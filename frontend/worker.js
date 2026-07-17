@@ -1,7 +1,9 @@
 // Vouch Combined Worker -- serves React app + handles API (Venice AI + three.ws)
 const VENICE_URL = 'https://api.venice.ai/api/v1/chat/completions';
 const THREEWS_URL = 'https://three.ws/api/x402/fact-check';
-const CDN_BASE = 'https://cdn.jsdelivr.net/gh/ToXMon/vouch@9ef58cb';
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/ToXMon/vouch@aec102a/frontend/dist';
+const MONAD_RPC = 'https://testnet-rpc.monad.xyz';
+const VOUCH_CONTRACT = '0x011189f535F744EC9A7a499F20df99f6CAdF1D25';
 
 function cors() {
   return {
@@ -45,6 +47,73 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors() });
 
     // API: Health
+    if (path === '/api/feed') {
+      try {
+        // Read nextId() via eth_call (selector: 0x61b8ce8c)
+        const idResp = await fetch(MONAD_RPC, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'eth_call', params: [{ to: VOUCH_CONTRACT, data: '0x61b8ce8c' }, 'latest'] })
+        });
+        const idData = await idResp.json();
+        const nextId = parseInt(idData.result || '0x0', 16);
+        if (nextId === 0) return new Response(JSON.stringify({ commitments: [] }), { headers: cors() });
+
+        // Batch read each commitment via eth_call to getCommitment(uint256) (selector: 0x69bcdb7d)
+        // IDs start at 0 — read up to nextId commitments
+        const commitments = [];
+        const maxRead = Math.min(nextId, 50);
+        const batch = [];
+        for (let i = 0; i < maxRead; i++) {
+          const arg = i.toString(16).padStart(64, '0');
+          batch.push({ jsonrpc: '2.0', id: i + 1, method: 'eth_call', params: [{ to: VOUCH_CONTRACT, data: '0x69bcdb7d' + arg }, 'latest'] });
+        }
+        const batchResp = await fetch(MONAD_RPC, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(batch)
+        });
+        const batchData = await batchResp.json();
+        const results = Array.isArray(batchData) ? batchData : [batchData];
+
+        for (let i = 0; i < results.length; i++) {
+          const hex = results[i].result;
+          if (!hex || hex === '0x' || hex.length < 10) continue;
+          // ABI struct (8 slots × 64 hex chars each, after '0x' prefix):
+          //   slot0: hex[2:66]   creator (address — last 40 chars)
+          //   slot1: hex[66:130] counterparty (address — last 40 chars)
+          //   slot2: hex[130:194] specHash (bytes32)
+          //   slot3: hex[194:258] vType (uint8 — last 2 chars)
+          //   slot4: hex[258:322] stake (uint256)
+          //   slot5: hex[322:386] deadline (uint256)
+          //   slot6: hex[386:450] status (uint8 — last 2 chars)
+          //   slot7: hex[450:514] evidenceHash (bytes32)
+          const creator = '0x' + hex.slice(26, 66);
+          const counterparty = '0x' + hex.slice(90, 130);
+          const specHash = '0x' + hex.slice(130, 194);
+          const vType = parseInt(hex.slice(256, 258), 16);
+          const stakeHex = hex.slice(258, 322);
+          const deadlineHex = hex.slice(322, 386);
+          const status = parseInt(hex.slice(448, 450), 16);
+          // Skip empty commitments (all zeros = uninitialized)
+          if (creator === '0x' + '0'.repeat(40)) continue;
+          commitments.push({
+            id: i,
+            creator,
+            counterparty,
+            specHash,
+            vType,
+            status,
+            stake: BigInt('0x' + stakeHex).toString(),
+            deadline: BigInt('0x' + deadlineHex).toString(),
+          });
+        }
+        return new Response(JSON.stringify({ commitments }), { headers: cors() });
+      } catch (e) {
+        return new Response(JSON.stringify({ commitments: [], error: String(e) }), { status: 500, headers: cors() });
+      }
+    }
+
     if (path === '/api/health') {
       return new Response(JSON.stringify({ status: 'ok', venice_configured: !!veniceKey, threews_configured: !!threewsKey }), { headers: cors() });
     }
@@ -96,12 +165,10 @@ export default {
       }
     }
 
-    // Static: index.html with CDN-rewritten asset paths
+    // Static: index.html — serve as-is, assets proxied from same origin
     if (path === '/' || path === '/index.html') {
       const cdnResp = await fetch(CDN_BASE + '/index.html');
       let html = await cdnResp.text();
-      html = html.split('src="/assets/').join('src="' + CDN_BASE + '/assets/');
-      html = html.split('href="/assets/').join('href="' + CDN_BASE + '/assets/');
       // Inject runtime env vars from worker secrets
       const paraKey = env.PARA_API_KEY || '';
       html = html.replace('</head>', '<script>window.__PARA_API_KEY__="' + paraKey + '";</script></head>');

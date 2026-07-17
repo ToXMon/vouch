@@ -19,7 +19,7 @@ function statusFromLog(log: CommitmentCreatedLog): 'active' | 'expired' {
   return Date.now() / 1000 < deadlinePlusChallenge ? 'active' : 'expired'
 }
 
-function FeedCard({ log }: { log: CommitmentCreatedLog }) {
+function FeedCard({ log, address }: { log: CommitmentCreatedLog; address?: `0x${string}` }) {
   const status = statusFromLog(log)
   const remaining = secondsUntil(log.deadline)
   const isMyCommitment = !!address && log.creator.toLowerCase() === address.toLowerCase()
@@ -182,6 +182,20 @@ export default function PublicFeed({ address, isConnected }: Props) {
       </div>
 
       {isLoading && <FeedSkeleton />}
+
+      {logs && logs.length > 0 && (
+        <div className="feed-grid">
+          {sorted!.map((log) => (
+            <FeedCard key={log.id.toString()} log={log} address={address} />
+          ))}
+        </div>
+      )}
+
+      {logs && logs.length === 0 && !isLoading && (
+        <div className="card stack">
+          <p className="text-dim">No commitments yet. Create the first one!</p>
+        </div>
+      )}
 
       {isError && (
         <div className="card stack">
