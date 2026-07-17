@@ -138,29 +138,25 @@ function FeedSkeleton() {
 }
 
 /**
- * Fetch commitment logs from server-side /api/feed endpoint.
- * This avoids browser RPC block-range limits on Monad testnet.
+ * Fetch commitments from server-side /api/feed endpoint.
+ * Worker reads contract via eth_call (bypasses 100-block log limit).
  */
 async function fetchFeedFromAPI(): Promise<CommitmentCreatedLog[]> {
   const resp = await fetch('/api/feed')
   if (!resp.ok) throw new Error(`Feed API returned ${resp.status}`)
   const data = await resp.json()
-  if (data.error) throw new Error(data.error)
-  if (!data.logs || !Array.isArray(data.logs)) return []
+  if (data.error) throw new Error(typeof data.error === 'string' ? data.error : 'RPC error')
+  if (!data.commitments || !Array.isArray(data.commitments)) return []
 
-  // Parse raw eth_getLogs response into CommitmentCreatedLog shape
-  return data.logs
-    .filter((log: any) => log.topics && log.topics.length >= 3)
-    .map((log: any) => ({
-      id: BigInt(log.topics[1]),
-      creator: ('0x' + log.topics[2].slice(26)) as `0x${string}`,
-      counterparty: ('0x' + (log.topics[3] || '0x' + '0'.repeat(64)).slice(26)) as `0x${string}`,
-      specHash: ('0x' + log.data.slice(2, 66)) as `0x${string}`,
-      vType: parseInt(log.data.slice(66, 130), 16),
-      stake: BigInt(log.data.slice(130, 194)),
-      deadline: BigInt(log.data.slice(194, 258)),
-    }))
-    .sort((a: any, b: any) => Number(b.id - a.id))
+  return data.commitments.map((c: any) => ({
+    id: BigInt(c.id),
+    creator: c.creator as `0x${string}`,
+    counterparty: c.counterparty as `0x${string}`,
+    specHash: c.specHash as `0x${string}`,
+    vType: Number(c.vType),
+    stake: BigInt(c.stake),
+    deadline: BigInt(c.deadline),
+  }))
 }
 
 export default function PublicFeed({ address, isConnected }: Props) {
