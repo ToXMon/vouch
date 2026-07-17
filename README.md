@@ -17,10 +17,10 @@
 
 | Service | URL | Status |
 |---------|-----|--------|
-| **Frontend (React)** | https://71ofkdl1pdeff7plsbgjq50i0o.ingress.oregon.skyfall.cz | ✅ Live (React 18 + Vite) |
-| **Agent Runtime** | https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz | ✅ Live |
-| **API Docs (Swagger)** | https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz/docs | ✅ Live |
-| **Health Check** | https://jd5gauqmh1ai5advf8s5m81nko.ingress.oregon.skyfall.cz/api/health | ✅ Live |
+| **Frontend (React)** | https://vouch.tolu-a-shekoni.workers.dev | ✅ Live (React 18 + Vite) |
+| **Agent Runtime** | https://vouch.tolu-a-shekoni.workers.dev | ✅ Live |
+| **API Docs (Swagger)** | https://vouch.tolu-a-shekoni.workers.dev/docs | ✅ Live |
+| **Health Check** | https://vouch.tolu-a-shekoni.workers.dev/api/health | ✅ Live |
 | **Contract** | `0x011189f535F744EC9A7a499F20df99f6CAdF1D25` on Monad Testnet (10143) | ✅ Deployed |
 
 > ⚠️ Akash providers use self-signed TLS certs. Your browser will show a security warning — click "Advanced" → "Proceed" to access the app.
