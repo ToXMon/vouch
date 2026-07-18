@@ -21,7 +21,7 @@
 | **Agent Runtime** | https://vouch.tolu-a-shekoni.workers.dev | ✅ Live |
 | **API Docs (Swagger)** | https://vouch.tolu-a-shekoni.workers.dev/docs | ✅ Live |
 | **Health Check** | https://vouch.tolu-a-shekoni.workers.dev/api/health | ✅ Live |
-| **Contract** | `0x5d763316Df16Ee9083168D323519A354856Be0f1` on Monad Testnet (10143) | ✅ Deployed |
+| **Contract** | `0x2471870511267d1eE09c08460D95Eaf5F5dE00D4` on Monad Mainnet (143) | ✅ Deployed |
 
 > ⚠️ Akash providers use self-signed TLS certs. Your browser will show a security warning — click "Advanced" → "Proceed" to access the app.
 
@@ -34,7 +34,7 @@ The AI-vs-AI demo runs end-to-end with **real Venice + three.ws API calls**:
 # Set API keys (get them from Venice.ai and three.ws)
 export VENICE_API_KEY="..."
 export THREE_WS_API_KEY="..."
-export VOUCH_CONTRACT_ADDRESS="0x5d763316Df16Ee9083168D323519A354856Be0f1"
+export VOUCH_CONTRACT_ADDRESS="0x2471870511267d1eE09c08460D95Eaf5F5dE00D4"
 
 # Run the 6-phase demo (~3 minutes)
 cd agents
@@ -78,7 +78,7 @@ demo_pause=1 python -m demo
 
 | Component | Status | Detail |
 |-----------|--------|--------|
-| **Vouch.sol** | ✅ Live | `0x5d763316Df16Ee9083168D323519A354856Be0f1` on Monad Testnet (10143) |
+| **Vouch.sol** | ✅ Live | `0x2471870511267d1eE09c08460D95Eaf5F5dE00D4` on Monad Mainnet (143) |
 | **Adjudicator** | ✅ Set | `0xc208F4e8e6Bfa82400C7AD8450728858133CEeCe` |
 | **Tests** | ✅ 28/28 | Forge test suite (create, evidence, challenge, settle, reentrancy) |
 | **Agent Runtime** | 📦 Ready | Dockerfile + Akash SDL — deploy from host (see below) |
@@ -113,7 +113,7 @@ forge test  # 28 tests
 
 # Deploy your own instance:
 forge script script/DeployVouch.s.sol:DeployVouch \
-    --rpc-url https://testnet-rpc.monad.xyz \
+    --rpc-url https://rpc.monad.xyz \
     --broadcast \
     --private-key $MONAD_DEPLOYER_PRIVATE_KEY
 ```
@@ -254,7 +254,7 @@ bash deploy/monad/deploy.sh
 
 | Layer | Tech |
 |-------|------|
-| Smart Contract | Solidity 0.8.20 / Foundry on Monad Testnet |
+| Smart Contract | Solidity 0.8.20 / Foundry on Monad Mainnet |
 | AI Agents | Venice API (Architect: Qwen, Auditor: vision, Adjudicator: Llama 70B) |
 | Verification | three.ws Fact Check API (SHA-256 attestations) |
 | Agent Runtime | Python 3.11 / FastAPI / Akash Network |

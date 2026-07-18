@@ -8,9 +8,9 @@ optimizer_runs = 200
 auto_detect_solc = false
 
 # Monad Testnet Configuration
-# chain_id = 10143
-# rpc_url = https://testnet-rpc.monad.xyz
+# chain_id = 143
+# rpc_url = https://rpc.monad.xyz
 # explorer = https://testnet.monadscan.com
 
 [rpc_endpoints]
-monad_testnet = "https://testnet-rpc.monad.xyz"
+monad_testnet = "https://rpc.monad.xyz"
