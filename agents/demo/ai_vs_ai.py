@@ -52,7 +52,7 @@ PHASE_PAUSE = float(os.environ.get("DEMO_PAUSE", "2.0"))
 
 # Demo contract address placeholder — the real demo would set
 # VOUCH_CONTRACT_ADDRESS in the environment.
-DEFAULT_CONTRACT = os.environ.get("VOUCH_CONTRACT_ADDRESS", "0x011189f535F744EC9A7a499F20df99f6CAdF1D25")
+DEFAULT_CONTRACT = os.environ.get("VOUCH_CONTRACT_ADDRESS", "0x5d763316Df16Ee9083168D323519A354856Be0f1")
 
 
 # ── Dry-run detection ────────────────────────────────────────────────

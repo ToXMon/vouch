@@ -21,7 +21,7 @@
 | **Agent Runtime** | https://vouch.tolu-a-shekoni.workers.dev | ✅ Live |
 | **API Docs (Swagger)** | https://vouch.tolu-a-shekoni.workers.dev/docs | ✅ Live |
 | **Health Check** | https://vouch.tolu-a-shekoni.workers.dev/api/health | ✅ Live |
-| **Contract** | `0x011189f535F744EC9A7a499F20df99f6CAdF1D25` on Monad Testnet (10143) | ✅ Deployed |
+| **Contract** | `0x5d763316Df16Ee9083168D323519A354856Be0f1` on Monad Testnet (10143) | ✅ Deployed |
 
 > ⚠️ Akash providers use self-signed TLS certs. Your browser will show a security warning — click "Advanced" → "Proceed" to access the app.
 
@@ -34,7 +34,7 @@ The AI-vs-AI demo runs end-to-end with **real Venice + three.ws API calls**:
 # Set API keys (get them from Venice.ai and three.ws)
 export VENICE_API_KEY="..."
 export THREE_WS_API_KEY="..."
-export VOUCH_CONTRACT_ADDRESS="0x011189f535F744EC9A7a499F20df99f6CAdF1D25"
+export VOUCH_CONTRACT_ADDRESS="0x5d763316Df16Ee9083168D323519A354856Be0f1"
 
 # Run the 6-phase demo (~3 minutes)
 cd agents
@@ -78,7 +78,7 @@ demo_pause=1 python -m demo
 
 | Component | Status | Detail |
 |-----------|--------|--------|
-| **Vouch.sol** | ✅ Live | `0x011189f535F744EC9A7a499F20df99f6CAdF1D25` on Monad Testnet (10143) |
+| **Vouch.sol** | ✅ Live | `0x5d763316Df16Ee9083168D323519A354856Be0f1` on Monad Testnet (10143) |
 | **Adjudicator** | ✅ Set | `0xc208F4e8e6Bfa82400C7AD8450728858133CEeCe` |
 | **Tests** | ✅ 28/28 | Forge test suite (create, evidence, challenge, settle, reentrancy) |
 | **Agent Runtime** | 📦 Ready | Dockerfile + Akash SDL — deploy from host (see below) |
@@ -191,14 +191,61 @@ The script will: validate wallet → render SDL with secrets → create deployme
 
 ---
 
-## 🛡️ Security
+## 🛡️ Security & Audit Due Diligence
 
+**Fund safety is a first-class concern.** Vouch locks real ETH stakes on binding commitments —
+the contract was hardened through a rigorous **two-phase audit process** before mainnet consideration.
+
+### Audit Results
+
+| Phase | Auditor | Findings | Status |
+|-------|---------|----------|--------|
+| **1. One Dollar Audit** (#417) | 3-phase AI: context map → breadth (5 domains) → pashov depth (12 agents) | 7 (2 High, 2 Med, 3 Low) | ✅ All remediated |
+| **2. Pashov Second-Pass** | 12-agent parallel swarm on PATCHED code (Feynman + Socratic + Inversion) | 5 (2 Med, 3 Low) + 7 leads | ✅ All remediated |
+
+**Total: 12 findings, 15 remediations applied, 0 outstanding.** Full reports in [`docs/audit/`](docs/audit/).
+
+### Verification
+
+| Check | Result |
+|-------|--------|
+| Unit tests | ✅ 58/58 passing |
+| Invariant fuzz (256 runs × 128k calls) | ✅ 2/2 passing |
+| Line coverage | ✅ 100% |
+| Slither static analysis | ✅ 0 High/Medium |
+| Sourcify verification | ✅ exact_match |
+
+### Fund Safety Architecture
+
+- **Pull-payment pattern** — stakes are never pushed; winners call `withdraw()` (prevents lockup, gas-bombs)
+- **Challenge bond (≥10%)** — counterparties must post bond to prevent free griefing
+- **Liveness fallback** — 7-day timeout + stake split guarantees no permanent fund lockup
+- **Adjudicator authority expiry** — prevents front-running the liveness fallback
 - **ReentrancyGuard** on all state-changing functions
-- **CEI pattern** (checks-effects-interactions) in `settle()`
-- **Custom errors** for gas efficiency
-- **Spec hash anchoring** — keccak256 of deterministic JSON serialization
-- **24h optimistic challenge window** before auto-settle
-- **Cross-model adjudication** — prevents single-model bias
+- **CEI pattern** in all settlement paths
+- **Immutable evidence** — hash cannot be overwritten once submitted
+
+📖 **Full security documentation:** [`SECURITY.md`](SECURITY.md)
+
+### Mainnet Readiness
+
+The contract is production-ready. Pre-deploy checklist:
+1. Generate dedicated adjudicator key (HSM/multisig recommended)
+2. Final source review against audit diffs
+3. Deploy via `deploy/monad/deploy.sh` with `ADJUDICATOR=0x<dedicated-key>`
+4. Verify on block explorer
+5. Monitor `ForceSettled` events (adjudicator health signal)
+
+```bash
+# Mainnet deployment
+MONAD_RPC_URL=<mainnet-rpc> \
+DEPLOYER_PRIVATE_KEY=0x<deployer> \
+ADJUDICATOR=0x<dedicated-adjudicator-key> \
+bash deploy/monad/deploy.sh
+```
+
+**Estimated deployment cost:** ~0.155 ETH (~$497 at 102 gwei, ~$253 at 52 gwei)
+
 - **Secrets via env vars only** — zero hardcoded keys, verified by secret scan
 
 ---

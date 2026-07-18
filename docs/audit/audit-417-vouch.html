@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vouch.sol (job 417) — LeftClaw Services</title>
+<meta name="description" content="Smart contract audit report for leftclaw.services job #417">
+<style>
+  :root {
+    --bg: #fffdf9;
+    --bg-soft: #fdf3e8;
+    --bg-softer: #f9e2c8;
+    --ink: #2c1408;
+    --ink-soft: #6b5648;
+    --primary: #c93a1e;
+    --rule: #ecd9c0;
+    --code-bg: #faf2e6;
+    --code-ink: #4a2c14;
+    --pill-critical-bg: #7a1010; --pill-critical-ink: #ffe3e3;
+    --pill-high-bg: #e03030;     --pill-high-ink: #ffffff;
+    --pill-medium-bg: #e8a020;   --pill-medium-ink: #2c1408;
+    --pill-low-bg: #4a90d9;      --pill-low-ink: #ffffff;
+    --pill-info-bg: #d8cbb8;     --pill-info-ink: #2c1408;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1410;
+      --bg-soft: #150e0a;
+      --bg-softer: #2a1c12;
+      --ink: #ffe8d8;
+      --ink-soft: #b89a86;
+      --primary: #e8431f;
+      --rule: #3d2a1c;
+      --code-bg: #150e0a;
+      --code-ink: #f4d9c2;
+      --pill-info-bg: #4a382a; --pill-info-ink: #ffe8d8;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .band { height: 6px; background: var(--primary); }
+
+  .page { max-width: 880px; margin: 0 auto; padding: 0 24px 80px; }
+
+  /* ---------- masthead ---------- */
+  header.masthead { padding: 36px 0 24px; border-bottom: 2px solid var(--rule); }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 600;
+  }
+  .brand .claw { font-size: 20px; }
+  .brand a { color: inherit; }
+  header.masthead h1.doc-title {
+    margin: 14px 0 4px; font-size: 34px; line-height: 1.2; letter-spacing: -.01em;
+  }
+  .job-sub { color: var(--ink-soft); font-size: 15px; margin: 0 0 18px; }
+  .meta-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; padding: 5px 12px; border-radius: 999px;
+    background: var(--bg-soft); border: 1px solid var(--rule); color: var(--ink);
+    white-space: nowrap;
+  }
+  .chip b { font-weight: 600; }
+  a.chip:hover { text-decoration: none; border-color: var(--primary); }
+
+  /* ---------- severity strip ---------- */
+  .sev-strip { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 0; }
+  .sev-card {
+    flex: 1 1 90px; min-width: 90px; text-align: center;
+    border: 1px solid var(--rule); border-radius: 8px; padding: 10px 6px 8px;
+    background: var(--bg-soft);
+  }
+  .sev-card .n { font-size: 26px; font-weight: 700; line-height: 1.1; }
+  .sev-card .l { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+  .sev-card.critical .n { color: var(--pill-critical-bg); }
+  .sev-card.high .n { color: var(--pill-high-bg); }
+  .sev-card.medium .n { color: var(--pill-medium-bg); }
+  .sev-card.low .n { color: var(--pill-low-bg); }
+  .sev-card.info .n { color: var(--ink-soft); }
+  @media (prefers-color-scheme: dark) {
+    .sev-card.critical .n { color: #ff8a8a; }
+  }
+
+  /* ---------- severity pills ---------- */
+  .pill {
+    display: inline-block; font-size: 12px; font-weight: 700; line-height: 1;
+    padding: 4px 10px; border-radius: 999px; letter-spacing: .04em;
+    text-transform: uppercase; vertical-align: baseline;
+  }
+  .pill.critical { background: var(--pill-critical-bg); color: var(--pill-critical-ink); }
+  .pill.high     { background: var(--pill-high-bg);     color: var(--pill-high-ink); }
+  .pill.medium   { background: var(--pill-medium-bg);   color: var(--pill-medium-ink); }
+  .pill.low      { background: var(--pill-low-bg);      color: var(--pill-low-ink); }
+  .pill.info     { background: var(--pill-info-bg);     color: var(--pill-info-ink); }
+
+  /* ---------- table of contents ---------- */
+  nav.toc {
+    margin: 28px 0 8px; padding: 18px 22px;
+    background: var(--bg-soft); border: 1px solid var(--rule); border-radius: 10px;
+  }
+  nav.toc .toc-title {
+    font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-soft); font-weight: 700; margin-bottom: 8px;
+  }
+  nav.toc .toc-cols { display: flex; gap: 36px; }
+  nav.toc ol { margin: 0; padding-left: 20px; flex: 1 1 0; }
+  nav.toc li { font-size: 14px; margin: 3px 0; }
+  @media (max-width: 640px) { nav.toc .toc-cols { flex-direction: column; gap: 0; } }
+
+  /* ---------- report body ---------- */
+  main.report { padding-top: 8px; }
+  main.report h1 { display: none; } /* masthead already shows the title */
+  main.report h2 {
+    font-size: 24px; line-height: 1.3; margin: 44px 0 14px;
+    padding-bottom: 8px; border-bottom: 2px solid var(--rule);
+    letter-spacing: -.01em;
+  }
+  main.report h3 { font-size: 19px; margin: 30px 0 10px; }
+  main.report h4 { font-size: 16px; margin: 24px 0 8px; }
+  main.report p { margin: 12px 0; }
+  main.report li { margin: 5px 0; }
+  main.report hr { border: none; border-top: 1px solid var(--rule); margin: 36px 0; }
+  main.report strong { font-weight: 650; }
+  main.report blockquote {
+    margin: 16px 0; padding: 10px 18px; border-left: 4px solid var(--primary);
+    background: var(--bg-soft); border-radius: 0 8px 8px 0; color: var(--ink-soft);
+  }
+
+  main.report code {
+    font: 13.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background: var(--code-bg); color: var(--code-ink);
+    padding: 2px 6px; border-radius: 5px; border: 1px solid var(--rule);
+  }
+  main.report pre {
+    background: var(--code-bg); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 16px 18px; overflow-x: auto; margin: 16px 0;
+  }
+  main.report pre code { background: none; border: none; padding: 0; color: var(--code-ink); }
+
+  .table-wrap { overflow-x: auto; margin: 16px 0; border: 1px solid var(--rule); border-radius: 10px; }
+  main.report table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  main.report th, main.report td {
+    text-align: left; padding: 9px 14px; border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  main.report thead th {
+    background: var(--bg-soft); font-size: 12px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--ink-soft); border-bottom: 2px solid var(--rule);
+  }
+  main.report tbody tr:last-child td { border-bottom: none; }
+  main.report tbody tr:nth-child(even) td { background: color-mix(in srgb, var(--bg-soft) 45%, transparent); }
+
+  /* ---------- footer ---------- */
+  footer.colophon {
+    margin-top: 64px; padding-top: 20px; border-top: 2px solid var(--rule);
+    font-size: 13.5px; color: var(--ink-soft);
+  }
+  footer.colophon p { margin: 6px 0; }
+  footer.colophon code { font-size: 12px; word-break: break-all; }
+
+  /* ---------- print ---------- */
+  @media print {
+    :root { --bg: #ffffff; --bg-soft: #f6f6f6; --rule: #dddddd; }
+    .band { display: none; }
+    .page { max-width: none; padding: 0; }
+    nav.toc ol { columns: 2; }
+    main.report pre, main.report .table-wrap { break-inside: avoid; }
+    main.report h2 { break-after: avoid; }
+    a { color: inherit; }
+  }
+</style>
+</head>
+<body>
+<div class="band"></div>
+<div class="page">
+
+  <header class="masthead">
+    <div class="brand">
+      <span class="claw">🦞</span>
+      <a href="https://leftclaw.services">LeftClaw Services</a>
+      <span>·</span>
+      <span>Smart Contract Audit</span>
+    </div>
+    <h1 class="doc-title">Vouch.sol (job 417)</h1>
+    <p class="job-sub">Job #417 · completed on-chain · report pinned to IPFS</p>
+    <div class="meta-chips">
+      <a class="chip" href="https://leftclaw.services/jobs/417"><b>Job page</b> #417</a>
+      <a class="chip" href="https://bafkreigtplf7opti53ku5ngbofrnwj5qv2ckil5vlfh3v6fikzyobfqsyy.ipfs.community.bgipfs.com/"><b>Canonical report</b> IPFS</a>
+      <span class="chip"><b>Generated</b> 2026-07-18</span>
+    </div>
+    
+  </header>
+
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <div class="toc-cols">
+    <ol>
+      <li><a href="#audit-target">Audit Target</a></li>
+      <li><a href="#reconciliation-summary">Reconciliation Summary</a></li>
+      <li><a href="#findings">Findings</a></li>
+    </ol>
+    <ol start="4">
+      <li><a href="#leads">Leads</a></li>
+      <li><a href="#access-control-inventory">Access-Control Inventory</a></li>
+      <li><a href="#threat-model">Threat Model</a></li>
+    </ol>
+    </div>
+  </nav>
+
+  <main class="report">
+<h1>🔐 Security Review — Vouch.sol (job 417)</h1>
+<hr>
+<h2 id="audit-target">Audit Target</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Contract</strong></td>
+<td><code>Vouch</code> (single file, no imports/inheritance)</td>
+</tr>
+<tr>
+<td><strong>Chain</strong></td>
+<td>Monad</td>
+</tr>
+<tr>
+<td><strong>Solidity</strong></td>
+<td>0.8.20</td>
+</tr>
+<tr>
+<td><strong>Source provenance</strong></td>
+<td>Full source supplied inline in the leftclaw job description (no deployed address given). SHA-256 of the exact audited source: <code>507475e14f2ff11af26ac95eded486074ceb8b17543085213904ce8c1fc2ac5a</code></td>
+</tr>
+<tr>
+<td><strong>Lines</strong></td>
+<td>279</td>
+</tr>
+<tr>
+<td><strong>Mode</strong></td>
+<td>Default — single in-scope file, no exclusions needed</td>
+</tr>
+<tr>
+<td><strong>Methodology</strong></td>
+<td>Three-phase: context map → ethskills breadth (5 domains) → pashov depth (12 agents, blind) → reconciliation</td>
+</tr>
+<tr>
+<td><strong>Confidence threshold</strong></td>
+<td>50 (findings below 50 listed as Leads, not findings)</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2 id="reconciliation-summary">Reconciliation Summary</h2>
+<p>Overlap (both phases independently found the same root cause): <strong>6</strong> · Phase-1-only: <strong>3</strong> · Phase-2-only: <strong>3</strong> · Leads promoted to Finding via multi-agent convergence: <strong>2</strong> (adjudicator self-dealing — independently reached FINDING-grade proof by 2+ of 12 blind Phase-2 agents despite others demoting to Lead; push-payment lock — independently reached FINDING-grade proof by 3+ agents) · Coverage holes closed this pass: <strong>0</strong> (both phases already covered every entrypoint; one confirmatory re-read of <code>submitEvidence</code>/constructor turned up nothing new).</p>
+<p>Entrypoints: 6 external/public functions in source (4 state-changing, 2 view) + 3 public state-variable getters — 6/6 covered in the inventory below, all appear in the threat catalog, and every one maps to a finding or an explicit &quot;examined, no issue.&quot;</p>
+<hr>
+<h2 id="findings">Findings</h2>
+<p>[85] <strong>1. <code>createCommitment</code> never checks <code>counterparty</code>/<code>creator</code> against <code>adjudicator</code>, enabling adjudicator self-dealing</strong></p>
+<p><code>Vouch.createCommitment</code> / <code>Vouch.challenge</code> / <code>Vouch.settle</code> · Confidence: 85 · Severity: <strong>High</strong> · Origin: <code>[both]</code> — phase1: general (G-2, G-3); phase2: agents 2 (access-control), 11 (trust-gap), corroborated as leads by agents 1, 5, 7, 8, 9</p>
+<p><strong>Description</strong><br><code>createCommitment</code> (source.sol:156) only rejects <code>counterparty == msg.sender</code>; nothing rejects <code>counterparty == adjudicator</code> or <code>msg.sender == adjudicator</code>. Since <code>adjudicator</code> is a <code>public immutable</code> address (source.sol:52), trivially readable by anyone, a creator can (knowingly or through social engineering) name the adjudicator itself as <code>counterparty</code>. The adjudicator can then call <code>challenge(id)</code> (source.sol:199-212), which passes because <code>c.counterparty == msg.sender</code> (source.sol:203), and subsequently call <code>settle(id, false)</code> (source.sol:221-234), which passes because <code>msg.sender == adjudicator</code> (source.sol:227) — sending the entire stake to itself via <code>_settle</code> (source.sol:264-279) regardless of the claim&#39;s actual merits. The symmetric case — the adjudicator itself calling <code>createCommitment</code> as <code>creator</code> — lets it always rule <code>creatorWins=true</code> on its own commitments, making them risk-free while still emitting the on-chain &quot;attestation&quot; events the protocol markets as trustworthy. Note also that <code>evidenceHash</code> (source.sol:189) is written but never read by any settlement logic (confirmed in <code>_settle</code>, source.sol:264-279), so there is no on-chain circuit-breaker even with airtight proof of the creator&#39;s honesty.</p>
+<p><strong>Proof of Concept</strong></p>
+<ol>
+<li>Read <code>adjudicator()</code> — public, free, e.g. returns <code>0xAAA</code>.</li>
+<li>Victim calls <code>createCommitment{value: 10 ether}(specHash, VerificationType.Photo, 0xAAA, 86400)</code> — passes every guard since <code>0xAAA != msg.sender</code>.</li>
+<li>After <code>deadline</code>, <code>0xAAA</code> calls <code>challenge(id)</code> — passes (<code>c.counterparty == msg.sender == 0xAAA</code>), status → <code>Challenged</code>.</li>
+<li><code>0xAAA</code> calls <code>settle(id, false)</code> — passes (<code>msg.sender == adjudicator == 0xAAA</code>). <code>_settle</code> computes <code>winner = c.counterparty = 0xAAA</code> and transfers the full 10 ETH to itself, irrespective of whether the victim actually fulfilled the commitment.</li>
+</ol>
+<p><strong>Fix</strong></p>
+<pre><code class="language-diff">     function createCommitment(
+         bytes32 specHash,
+         VerificationType vType,
+         address counterparty,
+         uint256 deadlineSeconds
+     ) external payable nonReentrant returns (uint256 id) {
+         if (msg.value == 0) revert Vouch__ZeroStake();
+         if (deadlineSeconds == 0) revert Vouch__InvalidDeadline();
+         if (counterparty == msg.sender) revert Vouch__SelfCounterparty();
++        if (counterparty == adjudicator || msg.sender == adjudicator) revert Vouch__InvalidCommitment();
+         if (specHash == bytes32(0)) revert Vouch__InvalidCommitment();
+</code></pre>
+<hr>
+<p>[80] <strong>2. Unconditional push-payment in <code>_settle</code> permanently locks a commitment&#39;s stake if the ruled winner cannot receive ETH</strong></p>
+<p><code>Vouch._settle</code> · Confidence: 80 · Severity: <strong>High</strong> · Origin: <code>[both]</code> — phase1: dos (DOS-1, DOS-2, DOS-4); general (G-4); phase2: agents 3 (economic-security), 6 (periphery), 9 (boundary), corroborated as leads by 10, 12</p>
+<p><strong>Description</strong><br><code>_settle</code> (source.sol:264-279) sets <code>c.status = Status.Settled</code> (source.sol:270) and then unconditionally pushes the stake to <code>winner</code> via <code>winner.call{value: amount}(&quot;&quot;)</code> (source.sol:277), reverting the entire transaction — including the status write, due to CEI ordering — if the call fails (source.sol:278). Neither <code>createCommitment</code> nor <code>challenge</code> validates that <code>counterparty</code> (or <code>creator</code>) can actually receive ETH. A creator can name any address — including a simple contract with no <code>receive()</code>/payable <code>fallback()</code>, or even <code>address(this)</code> — as <code>counterparty</code> at zero cost to that party (the counterparty never posts stake). Once such a counterparty legitimately challenges and the adjudicator correctly rules in its favor, every subsequent <code>settle()</code> call for that commitment reverts identically, forever. There is no pull-payment fallback, no rescue/sweep function, and no timeout — the only &quot;recovery&quot; is the adjudicator issuing a ruling contrary to the actual facts, which defeats the adjudication guarantee entirely. A related, gas-griefing variant of the same seam: because the call is a high-level <code>.call</code>, Solidity copies the full returndata into memory before discarding it — a <code>winner</code> contract that returns a very large payload from its fallback can push the memory-expansion cost above the block gas limit, making settlement unconditionally and permanently un-callable for that commitment even without an explicit revert.</p>
+<p><strong>Proof of Concept</strong></p>
+<ol>
+<li>Creator stakes 10 ETH naming <code>Bad</code> (a contract with no <code>receive</code>/<code>fallback</code>) as <code>counterparty</code>.</li>
+<li><code>Bad.challenge(id)</code> succeeds after the deadline (any contract can originate a plain call — no ETH-receiving capability needed to call <code>challenge</code>).</li>
+<li>Adjudicator, ruling correctly that <code>Bad</code> should win, calls <code>settle(id, false)</code>.</li>
+<li><code>_settle</code> sets <code>status = Settled</code>, then <code>Bad.call{value: 10 ether}(&quot;&quot;)</code> fails → <code>revert Vouch__TransferFailed()</code> (source.sol:278) unwinds the whole transaction, rolling <code>status</code> back to <code>Challenged</code>. Every subsequent <code>settle(id, false)</code> call fails identically — the 10 ETH is permanently stuck.</li>
+</ol>
+<p><strong>Fix (Option A — pull-payment)</strong></p>
+<pre><code class="language-diff">+    mapping(address =&gt; uint256) public withdrawable;
++
+     function _settle(
+         Commitment storage c,
+         uint256 id,
+         bool creatorWins,
+         bool disputed
+     ) internal {
+         c.status = Status.Settled;
+
+         address winner = creatorWins ? c.creator : c.counterparty;
+         uint256 amount = c.stake;
+
+         emit Settled(id, winner, amount, disputed);
+
+-        (bool success, ) = winner.call{value: amount}(&quot;&quot;);
+-        if (!success) revert Vouch__TransferFailed();
++        withdrawable[winner] += amount;
+     }
++
++    function withdraw() external nonReentrant {
++        uint256 amount = withdrawable[msg.sender];
++        withdrawable[msg.sender] = 0;
++        (bool success, ) = msg.sender.call{value: amount}(&quot;&quot;);
++        if (!success) revert Vouch__TransferFailed();
++    }
+</code></pre>
+<p><strong>Fix (Option B — bound the returndata-bomb variant only, if push-payment is kept)</strong></p>
+<pre><code class="language-diff">-        (bool success, ) = winner.call{value: amount}(&quot;&quot;);
+-        if (!success) revert Vouch__TransferFailed();
++        bool success;
++        assembly {
++            success := call(gas(), winner, amount, 0, 0, 0, 0)
++        }
++        if (!success) revert Vouch__TransferFailed();
+</code></pre>
+<hr>
+<p>[70] <strong>3. No timeout or fallback if the adjudicator is unresponsive — Challenged commitments can stall forever</strong></p>
+<p><code>Vouch.settle</code> (Challenged branch) · Confidence: 70 · Severity: <strong>Medium</strong> · Origin: <code>[both]</code> — phase1: access-control (AC-2), dos (DOS-3); phase2: leads from agents 2, 4, 6, 12</p>
+<p><strong>Description</strong><br>Once a commitment reaches <code>Challenged</code> (via <code>challenge()</code>, source.sol:209), the only path to resolution is <code>adjudicator</code> calling <code>settle()</code> (the <code>msg.sender != adjudicator</code> guard at source.sol:227). <code>adjudicator</code> is <code>immutable</code> (source.sol:52), set once in the constructor (source.sol:131) with no rotation, timelock, or multisig mechanism. There is no timestamp gate on the Challenged branch and no fallback if the adjudicator&#39;s key is lost, the operator stops responding, or the service is discontinued. Unlike Finding 2 (scoped to one pathological recipient), this affects <strong>every</strong> commitment that reaches <code>Challenged</code> after the adjudicator becomes unavailable — a broader blast radius. This is a documented, apparently intentional centralization tradeoff (NatSpec describes the adjudicator as an &quot;AI agent wallet&quot;), which is why it is rated Medium rather than High absent a concrete bypass — but it is a genuine liveness gap worth the client&#39;s attention given it can freeze funds for both parties indefinitely.</p>
+<p><strong>Proof of Concept</strong><br>Any commitment reaches <code>Challenged</code> via a legitimate <code>challenge()</code> call. If the <code>adjudicator</code> address&#39;s private key is subsequently lost, or the operator ceases running the service, <code>settle()</code>&#39;s Challenged branch can never succeed for that commitment (or any future challenged commitment) — funds are frozen forever with no owner/pause/upgrade path to intervene.</p>
+<p><strong>Recommendation</strong><br>Add a bounded timeout after which an unresolved <code>Challenged</code> commitment falls back to a defined default outcome (e.g., resolves to creator after N days of adjudicator silence), or document the centralization risk explicitly for integrators and end users. No code diff provided — this is a design-level tradeoff decision for the team, not a mechanical fix.</p>
+<hr>
+<p>[65] <strong>4. <code>challenge()</code> and <code>settle()</code>&#39;s auto-settle branch share one overlapping boundary timestamp, enabling a front-runnable race</strong></p>
+<p><code>Vouch.challenge</code> / <code>Vouch.settle</code> · Confidence: 65 · Severity: <strong>Medium</strong> · Origin: <code>[both]</code> — phase1: access-control (AC-1), general (G-1), chain-specific (CS-4); phase2: agents 4, 5, 7, 8, 10, 12 (6/12 rated FINDING; agents 1, 3, 9 rated as Lead/MEV-adjacent)</p>
+<p><strong>Description</strong><br><code>challenge()</code> reverts only if <code>block.timestamp &gt; c.deadline + CHALLENGE_WINDOW</code> (source.sol:207), i.e. it is valid on the closed interval <code>[deadline, deadline+CHALLENGE_WINDOW]</code>. <code>settle()</code>&#39;s Active/auto-settle branch reverts only if <code>block.timestamp &lt; c.deadline + CHALLENGE_WINDOW</code> (source.sol:231), i.e. it is valid on <code>[deadline+CHALLENGE_WINDOW, ∞)</code>. At the single instant <code>block.timestamp == deadline+CHALLENGE_WINDOW</code>, both are simultaneously legal against the same still-<code>Active</code> commitment. Since the auto-settle branch is fully permissionless (no caller restriction, source.sol:229-233) and always pays the creator (<code>creatorWins</code> hardcoded <code>true</code> at source.sol:232, ignoring the caller-supplied argument), a creator (or any bystander with an incentive) can front-run a counterparty&#39;s last-second <code>challenge()</code> with a higher-gas <code>settle(id, true)</code> in the same block. If the auto-settle transaction lands first, <code>status</code> becomes <code>Settled</code> and the counterparty&#39;s simultaneously-valid <code>challenge()</code> then reverts with <code>Vouch__AlreadyChallenged</code> (source.sol:204) — a dispute submitted within the documented window is permanently foreclosed. <code>isInChallengeWindow()</code> (source.sol:253) also reports <code>true</code> at this same instant, telling honest integrators the window is still open even as it can be raced away. This reduces to ordinary same-block transaction-ordering/MEV rather than a distinct logic flaw exploitable at will, and is scoped to the single boundary second — hence Medium rather than High.</p>
+<p><strong>Proof of Concept</strong><br>Let <code>deadline=1000000</code>, <code>CHALLENGE_WINDOW=86400</code>, boundary=<code>1086400</code>. At <code>block.timestamp==1086400</code>: counterparty broadcasts <code>challenge(id)</code> (valid, <code>1086400 &lt;= 1086400</code>); creator broadcasts <code>settle(id, true)</code> with higher gas in the same block (valid, <code>1086400 &gt;= 1086400</code>). If the creator&#39;s transaction is ordered first, <code>c.status</code> becomes <code>Settled</code>, the stake pays to the creator, and the counterparty&#39;s <code>challenge(id)</code> then reverts against <code>status != Active</code>.</p>
+<p><strong>Fix</strong></p>
+<pre><code class="language-diff">         } else {
+             // Active: auto-settle only after challenge window closes
+-            if (block.timestamp &lt; c.deadline + CHALLENGE_WINDOW) revert Vouch__ChallengeWindowOpen();
++            if (block.timestamp &lt;= c.deadline + CHALLENGE_WINDOW) revert Vouch__ChallengeWindowOpen();
+             _settle(c, id, true, false);
+         }
+</code></pre>
+<hr>
+<p>[55] <strong>5. <code>isInChallengeWindow()</code> does not check commitment status — misleading for integrators</strong></p>
+<p><code>Vouch.isInChallengeWindow</code> · Confidence: 55 · Severity: Low · Origin: <code>[phase2 only]</code> — agent 6 (periphery)</p>
+<p><strong>Description</strong><br><code>isInChallengeWindow</code> (source.sol:250-254) checks only <code>c.creator == address(0)</code> for existence (source.sol:252) and then a pure timestamp range (source.sol:253) — it never reads <code>c.status</code>. A commitment already <code>Challenged</code> (or, in principle, already <code>Settled</code> within the same time band, since the Challenged branch of <code>settle()</code> has no timestamp restriction) still returns <code>true</code>, identical to a still-<code>Active</code>, not-yet-challenged commitment. An off-chain frontend/bot relying on this view to decide &quot;is a dispute still actionable&quot; gets a false positive.</p>
+<p><strong>Proof of Concept</strong><br>Counterparty calls <code>challenge(id)</code> at <code>t = deadline+100</code> — <code>status</code> becomes <code>Challenged</code> (source.sol:209). At <code>t = deadline+5000</code> (still <code>&lt;= deadline+86400</code>), <code>isInChallengeWindow(id)</code> still returns <code>true</code> — indistinguishable from an unchallenged Active commitment — even though a second <code>challenge(id)</code> call at this timestamp reverts with <code>Vouch__AlreadyChallenged</code> (source.sol:204).</p>
+<p><strong>Fix</strong></p>
+<pre><code class="language-diff">     function isInChallengeWindow(uint256 id) external view returns (bool) {
+         Commitment storage c = commitments[id];
+         if (c.creator == address(0)) return false;
+-        return block.timestamp &gt;= c.deadline &amp;&amp; block.timestamp &lt;= c.deadline + CHALLENGE_WINDOW;
++        return c.status == Status.Active &amp;&amp; block.timestamp &gt;= c.deadline &amp;&amp; block.timestamp &lt;= c.deadline + CHALLENGE_WINDOW;
+     }
+</code></pre>
+<hr>
+<p>[55] <strong>6. Unbounded <code>deadlineSeconds</code> can overflow downstream additions, permanently self-locking a commitment&#39;s stake</strong></p>
+<p><code>Vouch.createCommitment</code> · Confidence: 55 · Severity: Low · Origin: <code>[both]</code> — phase1: precision-math (PM-1); phase2: agents 9 (boundary), 10 (numerical-gap), corroborated as leads by 1, 5</p>
+<p><strong>Description</strong><br><code>deadlineSeconds</code> is only checked for <code>!= 0</code> (source.sol:155); there is no upper bound. A creator who supplies <code>deadlineSeconds ≈ type(uint256).max - block.timestamp</code> causes <code>deadline</code> (source.sol:160) to land at exactly <code>type(uint256).max</code> without reverting at creation (the sum fits exactly). Every later evaluation of <code>c.deadline + CHALLENGE_WINDOW</code> — inside <code>challenge()</code> (source.sol:207), <code>settle()</code>&#39;s Active branch (source.sol:231), and <code>isInChallengeWindow()</code> (source.sol:253) — then overflows Solidity 0.8.20&#39;s checked <code>uint256</code> arithmetic and panics. <code>challenge()</code> never even reaches that expression, since its earlier <code>block.timestamp &lt; c.deadline</code> check (source.sol:206) reverts first and permanently (real time will never approach <code>2^256-1</code>). Net effect: the commitment is stuck <code>Active</code> forever with no cancel/refund path. This only risks the creator&#39;s own staked ETH (the counterparty never posts collateral) and requires the creator to deliberately or accidentally choose an astronomical duration — self-inflicted, hence Low severity, but a real, fully-provable, irreversible fund lock rather than a cosmetic issue.</p>
+<p><strong>Proof of Concept</strong><br>With <code>block.timestamp = T</code>, call <code>createCommitment(specHash, vType, counterparty, type(uint256).max - T)</code>. <code>deadline = T + (type(uint256).max - T) = type(uint256).max</code> — no revert. Any later <code>settle(id, _)</code> call while status is Active evaluates <code>c.deadline + CHALLENGE_WINDOW = type(uint256).max + 86400</code>, panicking (<code>Panic(0x11)</code>) every time.</p>
+<p><strong>Fix</strong></p>
+<pre><code class="language-diff">         if (msg.value == 0) revert Vouch__ZeroStake();
+         if (deadlineSeconds == 0) revert Vouch__InvalidDeadline();
++        if (deadlineSeconds &gt; 3650 days) revert Vouch__InvalidDeadline();
+         if (counterparty == msg.sender) revert Vouch__SelfCounterparty();
+</code></pre>
+<hr>
+<p>[50] <strong>7. <code>getCommitment()</code> returns a zeroed struct for nonexistent IDs, indistinguishable from a real Active commitment</strong></p>
+<p><code>Vouch.getCommitment</code> · Confidence: 50 · Severity: Low/Info · Origin: <code>[phase2 only]</code> — agent 6 (periphery)</p>
+<p><strong>Description</strong><br><code>getCommitment</code> (source.sol:243-245) has no existence guard (contrast with <code>isInChallengeWindow</code>, which explicitly checks <code>c.creator == address(0)</code> at source.sol:252). For any never-created <code>id</code> (id 0 is guaranteed unused since <code>nextId</code> starts at 1, and any <code>id &gt;= nextId</code> was never written), the function returns a fully zeroed <code>Commitment</code> struct whose <code>status</code> field equals <code>Status.Active</code> (the enum&#39;s zero value, source.sol:26) — indistinguishable from a legitimately-created, zero-stake commitment. An integrator that doesn&#39;t independently check <code>creator != address(0)</code> before trusting the returned <code>status</code> could mistake a nonexistent commitment for a real, live one.</p>
+<p><strong>Recommendation</strong><br>Revert when <code>commitments[id].creator == address(0)</code>, or add an explicit existence signal (a separate <code>commitmentExists(id)</code> view, or an <code>exists</code> boolean in the return value).</p>
+<hr>
+<h2 id="leads">Leads</h2>
+<p><em>Trails with concrete code smells where the full exploit path did not clear all four judging gates in this pass. Not scored.</em></p>
+<ul>
+<li><strong>Solidity 0.8.20 defaults to PUSH0 (Shanghai target)</strong> — contract-wide — Code smell: <code>pragma solidity 0.8.20;</code> (source.sol:2) emits <code>PUSH0</code> by default. Deployment-environment risk, not a runtime bug — confirm Monad&#39;s execution client supports <code>PUSH0</code>, or pin <code>evmVersion</code> to a supported target if not. [phase1: general G-7, chain-specific CS-5]</li>
+<li><strong><code>creatorWins</code> parameter silently ignored on the auto-settle path</strong> — <code>settle()</code> — Code smell: the caller-supplied <code>creatorWins</code> bool is discarded and hardcoded to <code>true</code> at source.sol:232 whenever <code>status != Challenged</code>. Documented in the inline comment, not exploitable, but an API-clarity footgun for integrators who might assume the argument always controls the outcome. [phase1: access-control AC-4, general G-5]</li>
+<li><strong>No rescue path for ETH force-fed via <code>selfdestruct</code>/coinbase reward</strong> — contract-wide — Code smell: no <code>receive()</code>/<code>fallback()</code>/sweep function; settlement logic pays out only <code>c.stake</code> per commitment, not <code>address(this).balance</code>, so forced ETH doesn&#39;t break per-commitment accounting but is permanently unclaimable. No action required given the ownerless, immutable design. [phase1: general G-6]</li>
+<li><strong><code>Status.Expired</code> enum member declared but never assigned or read anywhere</strong> — contract-wide — Code smell: dead state; every commitment&#39;s terminal status is always <code>Settled</code>, never <code>Expired</code>. Not independently exploitable, but worth confirming with the team whether an expiry/timeout feature was intended and dropped (see Finding 3). [phase0 open question; phase2 leads from agents 7, 8, 9, 12]</li>
+<li><strong>Evidence hash never enforced on-chain</strong> — <code>submitEvidence</code> / <code>settle</code> — Code smell: <code>evidenceHash</code> (source.sol:189) is write-only and never read by <code>_settle</code> or any settlement check; the &quot;AI-verified&quot; claim is purely off-chain and unenforceable by the contract itself. By design per the NatSpec, but amplifies Finding 1&#39;s severity (no on-chain circuit-breaker even with airtight evidence). [phase2: agent 11, trust-gap]</li>
+<li><strong>Shared hot-storage slots (<code>nextId</code>, <code>_reentrancyStatus</code>) serialize all state-changing calls under Monad&#39;s parallel-execution model</strong> — contract-wide — Throughput/liveness characteristic, not a correctness bug; every state-changing call touches <code>_reentrancyStatus</code>, so unrelated commitments&#39; transactions cannot execute in parallel. [phase1: chain-specific CS-6]</li>
+</ul>
+<hr>
+<h2 id="access-control-inventory">Access-Control Inventory</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Guard (line)</th>
+<th>Caller</th>
+<th>Writes</th>
+<th>Value?</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>constructor(address)</code> (L129)</td>
+<td><code>_adjudicator==0</code> → revert (L130)</td>
+<td>deployer, once</td>
+<td><code>adjudicator</code> (immutable), <code>_reentrancyStatus</code>, <code>nextId</code></td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>createCommitment(...)</code> (L148)</td>
+<td><code>nonReentrant</code>(153); <code>msg.value==0</code>(154); <code>deadlineSeconds==0</code>(155); <code>counterparty==msg.sender</code>(156); <code>specHash==0</code>(157)</td>
+<td><strong>anyone</strong></td>
+<td><code>nextId</code>(159), new <code>commitments[id]</code>(162-171)</td>
+<td><strong>in</strong>, locks <code>msg.value</code></td>
+</tr>
+<tr>
+<td><code>submitEvidence(id,hash)</code> (L181)</td>
+<td><code>nonReentrant</code>(181); existence(183); <code>creator!=msg.sender</code>(184); <code>status!=Active</code>(185); <code>t&gt;=deadline</code>(186); <code>hash==0</code>(187)</td>
+<td><strong>creator only</strong></td>
+<td><code>commitments[id].evidenceHash</code>(189)</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>challenge(id)</code> (L199)</td>
+<td><code>nonReentrant</code>(199); existence(201); <code>counterparty==0</code>(202); <code>counterparty!=msg.sender</code>(203); <code>status!=Active</code>(204); <code>t&lt;deadline</code>(206); <code>t&gt;deadline+WINDOW</code>(207)</td>
+<td><strong>counterparty only</strong> (blocked if counterparty==0)</td>
+<td><code>status=Challenged</code>(209)</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>settle(id,bool)</code> (L221)</td>
+<td><code>nonReentrant</code>(221); existence(223); <code>status==Settled</code>→revert(224); <strong>Challenged</strong>: <code>msg.sender!=adjudicator</code>(227); <strong>Active</strong>: <code>t&lt;deadline+WINDOW</code>(231)</td>
+<td><strong>Challenged: adjudicator only. Active: anyone</strong></td>
+<td>via <code>_settle</code>: <code>status=Settled</code>(270)</td>
+<td><strong>out</strong>, full stake via <code>.call</code></td>
+</tr>
+<tr>
+<td><code>getCommitment(id)</code> (L243)</td>
+<td>none, view</td>
+<td>anyone</td>
+<td>—</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>isInChallengeWindow(id)</code> (L250)</td>
+<td>none, view</td>
+<td>anyone</td>
+<td>—</td>
+<td>no</td>
+</tr>
+<tr>
+<td><code>_settle(...)</code> (L264, internal)</td>
+<td>none of its own — inherits caller&#39;s <code>nonReentrant</code></td>
+<td>only reachable from <code>settle</code>(228, 232)</td>
+<td><code>status</code>(270)</td>
+<td><code>winner.call{value:amount}</code>(277), revert on failure(278)</td>
+</tr>
+</tbody></table></div>
+<p><strong>Roles.</strong> Only <code>adjudicator</code> (L52, <code>address public immutable</code>). Set once in constructor (L131) with a zero-address check (L130). No setter exists anywhere — cannot be transferred, rotated, or renounced. Unlocks only the Challenged branch of <code>settle</code> (L227), where it supplies the <code>creatorWins</code> ruling. No owner, admin, pause, or upgrade mechanism exists in the contract (see Finding 3 for the liveness consequence, and Finding 1 for the missing role-separation guard).</p>
+<p><strong>Unguarded (state-changing, arbitrary caller):</strong> <code>createCommitment</code> (own funds only); <code>settle</code>&#39;s Active/auto-settle branch (anyone may trigger, but cannot redirect funds since <code>creatorWins</code> is hardcoded <code>true</code> there — see Finding 4 for the timing race this still enables).</p>
+<hr>
+<h2 id="threat-model">Threat Model</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Actor</th>
+<th>Reaches</th>
+<th>Could gain</th>
+<th>Invariant / disposition</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Adjudicator (self-dealing)</td>
+<td><code>createCommitment</code> naming itself as party, then <code>challenge</code>+<code>settle</code></td>
+<td>100% of a commitment&#39;s stake, unconditionally</td>
+<td><strong>Addressed by Finding 1</strong> — no guard prevents role collision</td>
+</tr>
+<tr>
+<td>Hostile/non-payable counterparty</td>
+<td><code>_settle</code>&#39;s <code>winner.call</code></td>
+<td>Permanently freezes the creator&#39;s stake at zero cost to itself</td>
+<td><strong>Addressed by Finding 2</strong> — no pull-payment fallback</td>
+</tr>
+<tr>
+<td>Adjudicator (unavailable)</td>
+<td><code>settle</code>&#39;s Challenged branch</td>
+<td>N/A (liveness failure, not profit)</td>
+<td><strong>Addressed by Finding 3</strong> — no timeout/fallback resolution</td>
+</tr>
+<tr>
+<td>Creator (or any bystander) racing a counterparty</td>
+<td><code>challenge</code> vs. <code>settle</code> at <code>t==deadline+WINDOW</code></td>
+<td>Forces auto-settle before a legitimate dispute lands</td>
+<td><strong>Addressed by Finding 4</strong> — boundary overlap</td>
+</tr>
+<tr>
+<td>Arbitrary caller</td>
+<td><code>settle</code>&#39;s Active branch</td>
+<td>Nothing directly — <code>creatorWins</code> forced <code>true</code> regardless of caller</td>
+<td><strong>Invariant holds</strong> — caller identity cannot redirect funds on this path (only timing matters — see Finding 4)</td>
+</tr>
+<tr>
+<td>Creator</td>
+<td><code>createCommitment</code>, choosing <code>counterparty=address(0)</code></td>
+<td>Removes challengeability entirely (self-commitment)</td>
+<td><strong>Invariant holds by design</strong> — confirmed via <code>challenge()</code>&#39;s L202 guard, matches NatSpec (L143)</td>
+</tr>
+<tr>
+<td>Any address</td>
+<td><code>winner.call</code> reentrancy attempt during <code>_settle</code></td>
+<td>Double-settlement / cross-function reentrancy</td>
+<td><strong>Invariant holds</strong> — global <code>nonReentrant</code> (L115-120) covers all 4 state-changing entrypoints; independently confirmed by all 17 hunting agents across both phases</td>
+</tr>
+</tbody></table></div>
+<hr>
+<blockquote>
+<p>⚠️ This review was performed by an AI-orchestrated three-phase audit (context mapping → ethskills breadth → pashov-methodology depth, 20 sub-agents total) as part of an automated leftclaw.services engagement. AI analysis can never verify the complete absence of vulnerabilities and no guarantee of security is given. A human review, bug bounty program, and on-chain monitoring are strongly recommended before mainnet deployment, particularly given the unresolved centralization/liveness dependency on the <code>adjudicator</code> role (Finding 3) and the missing role-separation guard (Finding 1).</p>
+</blockquote>
+
+  </main>
+
+  <footer class="colophon">
+    <p><strong>Canonical copy:</strong> this is a styled rendering of the immutable report delivered on IPFS —
+       <a href="https://bafkreigtplf7opti53ku5ngbofrnwj5qv2ckil5vlfh3v6fikzyobfqsyy.ipfs.community.bgipfs.com/"><code>https://bafkreigtplf7opti53ku5ngbofrnwj5qv2ckil5vlfh3v6fikzyobfqsyy.ipfs.community.bgipfs.com/</code></a>.
+       If the two ever differ, the IPFS copy is authoritative.</p>
+    <p>Audited by <a href="https://leftclaw.services">LeftClaw Services</a> 🦞 — job
+       <a href="https://leftclaw.services/jobs/417">#417</a> on Base. Rendered 2026-07-18.</p>
+  </footer>
+
+</div>
+</body>
+</html>
