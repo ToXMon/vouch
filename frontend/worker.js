@@ -1,7 +1,7 @@
 // Vouch Combined Worker -- serves React app + handles API (Venice AI + three.ws + KV spec/evidence persistence)
 const VENICE_URL = 'https://api.venice.ai/api/v1/chat/completions';
 const THREEWS_URL = 'https://three.ws/api/x402/fact-check';
-const CDN_BASE = 'https://cdn.jsdelivr.net/gh/ToXMon/vouch@main/frontend/dist';
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/ToXMon/vouch@c1717569c5b55729bae1a09eace5d05f45bb71c1/frontend/dist';
 
 // Defaults — overridable via env vars (VOUCH_CONTRACT_ADDRESS, MONAD_RPC_URL)
 const DEFAULT_MONAD_RPC = 'https://testnet-rpc.monad.xyz';
