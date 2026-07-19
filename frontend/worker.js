@@ -313,7 +313,7 @@ export default {
       let html = await cdnResp.text();
       const paraKey = env.PARA_API_KEY || '';
       html = html.replace('</head>', '<script>window.__PARA_API_KEY__="' + paraKey + '";</script></head>');
-      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*' } });
+      return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store, must-revalidate' } });
     }
 
     // ── Static: proxy other assets from CDN ──────────────────────
