@@ -1,7 +1,11 @@
 // Vouch Combined Worker -- serves React app + handles API (Venice AI + three.ws + KV spec/evidence persistence)
 const VENICE_URL = 'https://api.venice.ai/api/v1/chat/completions';
 const THREEWS_URL = 'https://three.ws/api/x402/fact-check';
-const CDN_BASE = 'https://cdn.jsdelivr.net/gh/ToXMon/vouch@c1717569c5b55729bae1a09eace5d05f45bb71c1/frontend/dist';
+// @main keeps the CDN in sync with the latest commit on the default branch.
+// jsDelivr caches aggressively at the edge; the index.html fetch below appends a
+// Date.now() cache-buster so a fresh worker deploy always pulls the latest HTML.
+// Vite content-hashes asset filenames, so hashed asset URLs need no buster.
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/ToXMon/vouch@main/frontend/dist';
 
 // Defaults — overridable via env vars (VOUCH_CONTRACT_ADDRESS, MONAD_RPC_URL)
 const DEFAULT_MONAD_RPC = 'https://testnet-rpc.monad.xyz';
@@ -305,7 +309,7 @@ export default {
 
     // ── Static: index.html — serve as-is, inject runtime env vars ──
     if (path === '/' || path === '/index.html') {
-      const cdnResp = await fetch(CDN_BASE + '/index.html');
+      const cdnResp = await fetch(CDN_BASE + '/index.html?v=' + Date.now());
       let html = await cdnResp.text();
       const paraKey = env.PARA_API_KEY || '';
       html = html.replace('</head>', '<script>window.__PARA_API_KEY__="' + paraKey + '";</script></head>');
