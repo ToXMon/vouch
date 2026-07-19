@@ -1,11 +1,10 @@
 // Vouch Combined Worker -- serves React app + handles API (Venice AI + three.ws + KV spec/evidence persistence)
 const VENICE_URL = 'https://api.venice.ai/api/v1/chat/completions';
 const THREEWS_URL = 'https://three.ws/api/x402/fact-check';
-// @main keeps the CDN in sync with the latest commit on the default branch.
-// jsDelivr caches aggressively at the edge; the index.html fetch below appends a
-// Date.now() cache-buster so a fresh worker deploy always pulls the latest HTML.
-// Vite content-hashes asset filenames, so hashed asset URLs need no buster.
-const CDN_BASE = 'https://cdn.jsdelivr.net/gh/ToXMon/vouch@main/frontend/dist';
+// Pin to exact immutable commit for reliable jsDelivr edge caching.
+// Moving tags (@main) cause cache-staleness issues across jsDelivr POPs.
+// CI auto-updates this pin on every successful frontend build.
+const CDN_BASE = 'https://cdn.jsdelivr.net/gh/ToXMon/vouch@5dcdd90/frontend/dist';
 
 // Defaults — overridable via env vars (VOUCH_CONTRACT_ADDRESS, MONAD_RPC_URL)
 const DEFAULT_MONAD_RPC = 'https://testnet-rpc.monad.xyz';
